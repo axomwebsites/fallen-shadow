@@ -209,6 +209,8 @@ if(scene==="menu") updatemenu(); else if(scene==="intro") updateintro(); else if
 requestAnimationFrame(loop);
 }
 window.addEventListener("resize",()=>{
+let canvas = document.getElementById("gamecanvas");
+if(!canvas) return;
 let w = window.innerWidth; let h = window.innerHeight; let r = 960/540; if(w/h > r){ canvas.style.width = (h*r)+"px"; canvas.style.height = h+"px"; } else { canvas.style.width = w+"px"; canvas.style.height = (w/r)+"px"; }
 });
 window.dispatchEvent(new Event("resize")); loop();
