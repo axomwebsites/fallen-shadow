@@ -1,6 +1,7 @@
 import { inputs, drawvirtualcontrols } from "./controls.js";
 import { drawstylizedcharacter } from "./engine.js";
-window.ctx = document.getElementById("gamecanvas").getContext("2d");
+const canvasEl = document.getElementById("gamecanvas");
+window.ctx = canvasEl.getContext("2d");
 let scene = "menu"; let introtimer = 0; let currentstage = 1; let unlockedstage = 1; let fadealpha = 0; let fademode = "none"; let levelwidth = 4000;
 let menuscrollx = 0; let targetmenuscrollx = 0;
 let player = {x:100,y:350,vx:0,vy:0,w:44,h:68,onground:false,state:"idle",flip:false,ticks:0,dashtimer:0,slidetimer:0,dashcooldown:0,crouching:false,dead:false,deathtimer:0,invulnerable:0};
@@ -61,7 +62,9 @@ if(currentstage<=unlockedstage){ document.getElementById("ui").innerHTML=""; int
 });
 document.getElementById("touchcontrolslayer").addEventListener("click",e=>{
 if(scene!=="menu")return;
-let mx = (e.clientX/window.innerWidth)*960; let my = (e.clientY/window.innerHeight)*540;
+let rect = canvasEl.getBoundingClientRect();
+let mx = ((e.clientX - rect.left) / rect.width) * 960;
+let my = ((e.clientY - rect.top) / rect.height) * 540;
 if(my>160 && my<400){
 if(mx<200){ currentstage=Math.max(1,currentstage-1); targetmenuscrollx=(currentstage-1)*260; }
 else if(mx>760){ currentstage=Math.min(30,currentstage+1); targetmenuscrollx=(currentstage-1)*260; }
@@ -211,6 +214,9 @@ requestAnimationFrame(loop);
 window.addEventListener("resize",()=>{
 let canvas = document.getElementById("gamecanvas");
 if(!canvas) return;
-let w = window.innerWidth; let h = window.innerHeight; let r = 960/540; if(w/h > r){ canvas.style.width = (h*r)+"px"; canvas.style.height = h+"px"; } else { canvas.style.width = w+"px"; canvas.style.height = (w/r)+"px"; }
+let w = window.innerWidth; let h = window.innerHeight; let r = 960/540;
+canvas.width = 960; canvas.height = 540;
+if(w/h > r){ canvas.style.width = (h*r)+"px"; canvas.style.height = h+"px"; } else { canvas.style.width = w+"px"; canvas.style.height = (w/r)+"px"; }
+ctx.imageSmoothingEnabled = false;
 });
 window.dispatchEvent(new Event("resize")); loop();
