@@ -29,18 +29,21 @@ function gomenu() {
     document.getElementById('touchcontrols').classList.add('hidden');
     document.getElementById('joystickwrap').classList.add('hidden');
     document.getElementById('bossbarwrap').classList.add('hidden');
+    if (editmode) toggleeditmode();
 }
 
 function pausegame() {
     if (state !== stateplay) return;
     state = statepause;
     document.getElementById('pausemenu').classList.remove('hidden');
+    updatecontrolvisibility();
 }
 
 function resumegame() {
     state = stateplay;
     document.getElementById('pausemenu').classList.add('hidden');
     document.getElementById('settingsmenu').classList.add('hidden');
+    updatecontrolvisibility();
 }
 
 function hideoverlays() {
@@ -66,6 +69,22 @@ function bindtoggle(id, key) {
     };
 }
 
+function toggleeditmode() {
+    editmode = !editmode;
+    const game = document.getElementById('game');
+    if (editmode) {
+        game.classList.add('editmode');
+        document.getElementById('edithudbtn').style.background = '#4a3f80';
+        document.getElementById('edithudbtn').textContent = 'stop edit';
+        document.querySelectorAll('.draggable').forEach(el => el.style.cursor = 'grab');
+    } else {
+        game.classList.remove('editmode');
+        document.getElementById('edithudbtn').style.background = '';
+        document.getElementById('edithudbtn').textContent = 'edit hud';
+        document.querySelectorAll('.draggable').forEach(el => el.style.cursor = '');
+    }
+}
+
 function setupui() {
     document.getElementById('playbtn').onclick = () => { getaudioctx();
         startstory(); };
@@ -81,14 +100,29 @@ function setupui() {
     document.getElementById('settingsbtn2').onclick = () => { opensettings(false); };
     document.getElementById('settingsback').onclick = () => {
         document.getElementById('settingsmenu').classList.add('hidden');
-        if (settingsfrompause) { document.getElementById('pausemenu').classList.remove('hidden'); } else { document.getElementById('startscreen').classList.remove('hidden'); }
+        if (settingsfrompause) { document.getElementById('pausemenu').classList.remove('hidden');
+            updatecontrolvisibility(); } else { document.getElementById('startscreen').classList.remove('hidden'); }
     };
     document.getElementById('retrybtn').onclick = () => startlevel(curlevel);
     document.getElementById('gomenubtn').onclick = gomenu;
     document.getElementById('nextbtn').onclick = () => startlevel(curlevel + 1);
     document.getElementById('lcmenubtn').onclick = gomenu;
+    document.getElementById('edithudbtn').onclick = toggleeditmode;
 
     bindtoggle('soundtoggle', 'sound');
     bindtoggle('shaketoggle', 'shake');
     bindtoggle('particletoggle', 'particles');
-}
+
+    document.getElementById('desktopmodebtn').onclick = () => {
+        settings.controlsmode = 'desktop';
+        controlsmode = 'desktop';
+        persistset();
+        updatecontrolvisibility();
+    };
+    document.getElementById('mobilemodebtn').onclick = () => {
+        settings.controlsmode = 'mobile';
+        controlsmode = 'mobile';
+        persistset();
+        updatecontrolvisibility();
+    };
+        }
