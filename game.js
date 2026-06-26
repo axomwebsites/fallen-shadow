@@ -22,6 +22,8 @@ const settings = JSON.parse(localStorage.getItem('fs_settings') || '{}');
 if (settings.sound === undefined) settings.sound = true;
 if (settings.shake === undefined) settings.shake = true;
 if (settings.particles === undefined) settings.particles = true;
+if (settings.controlsmode === undefined) settings.controlsmode = 'auto';
+controlsmode = settings.controlsmode;
 
 function persist() { localStorage.setItem('fallen_shadow', JSON.stringify(save)); }
 
@@ -80,7 +82,7 @@ function startlevel(n) {
     document.getElementById('hud').classList.remove('hidden');
     document.getElementById('lvlnum').textContent = n;
     document.getElementById('best').textContent = save.best;
-    showmobilecontrols();
+    updatecontrolvisibility();
     document.getElementById('bossbarwrap').classList.toggle('hidden', !level.boss);
     hideoverlays();
 }
@@ -311,7 +313,7 @@ function update(dt) {
     cd_el.style.height = (p.slidecd / 15000 * 100) + '%';
 
     let target = 0;
-    if (is_mobile) {
+    if (controlsmode !== 'desktop' && (controlsmode === 'mobile' || is_mobile)) {
         if (keys.right) target = 3.6;
         else if (keys.left) target = -3.6;
     } else {
