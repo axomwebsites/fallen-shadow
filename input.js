@@ -3,7 +3,7 @@ let joystickactive = false;
 let joystickdx = 0;
 let joystickdy = 0;
 let editmode = false;
-let controlsmode = 'auto'; 
+let controlsmode = 'auto';
 
 function setupinput() {
     window.addEventListener('keydown', e => {
@@ -110,7 +110,7 @@ function showmobilecontrols() {
 
 function showdesktopcontrols() {
     document.getElementById('joystickwrap').classList.add('hidden');
-    document.getElementById('touchcontrols').classlist.add('hidden');
+    document.getElementById('touchcontrols').classList.add('hidden');
 }
 
 function updatecontrolvisibility() {
