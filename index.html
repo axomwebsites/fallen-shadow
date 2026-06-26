@@ -27,9 +27,9 @@
         <div id="touchcontrols" class="hidden">
             <div class="tcleft">
                 <div class="tbtn" id="crouchbtn">crouch</div>
-                <div class="tbtn" id="slidebtn">slide<div class="cdfill" id="slidecd"></div></div>
             </div>
             <div class="tcright">
+                <div class="tbtn" id="slidebtn">slide<div class="cdfill" id="slidecd"></div></div>
                 <div class="tbtn" id="jumpbtn">jump</div>
             </div>
         </div>
@@ -69,6 +69,7 @@
                 <button class="btn" id="resumebtn">resume</button>
                 <button class="btn" id="menubtn">main menu</button>
                 <button class="btn" id="settingsbtn">settings</button>
+                <button class="btn" id="edithudbtn">edit hud</button>
             </div>
         </div>
 
@@ -78,6 +79,13 @@
                 <div class="setrow"><span>sound</span><div class="toggle on" id="soundtoggle"><div class="knob"></div></div></div>
                 <div class="setrow"><span>screen shake</span><div class="toggle on" id="shaketoggle"><div class="knob"></div></div></div>
                 <div class="setrow"><span>particles</span><div class="toggle on" id="particletoggle"><div class="knob"></div></div></div>
+                <div class="setrow">
+                    <span>controls</span>
+                    <div style="display:flex;gap:8px;">
+                        <button class="btn smallbtn" id="desktopmodebtn">🖥️</button>
+                        <button class="btn smallbtn" id="mobilemodebtn">📱</button>
+                    </div>
+                </div>
                 <button class="btn" id="settingsback" style="margin-top:20px">back</button>
             </div>
         </div>
