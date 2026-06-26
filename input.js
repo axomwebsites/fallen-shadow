@@ -90,8 +90,13 @@ function setupinput() {
     bindtouch('crouchbtn', togglecrouch);
 
     window.is_mobile = ('ontouchstart' in window) && window.innerWidth < 1024;
-    document.getElementById('joystickwrap').classList.toggle('hidden', !is_mobile);
-    document.getElementById('touchcontrols').classList.toggle('hidden', !is_mobile);
+    if (window.is_mobile) {
+        document.getElementById('joystickwrap').classList.remove('hidden');
+        document.getElementById('touchcontrols').classList.remove('hidden');
+    } else {
+        document.getElementById('joystickwrap').classList.add('hidden');
+        document.getElementById('touchcontrols').classList.add('hidden');
+    }
 }
 
 function dojump() {
@@ -112,4 +117,4 @@ function doslide() {
 function togglecrouch() {
     if (player.sliding) return;
     player.crouch = !player.crouch;
-          }
+}
