@@ -80,10 +80,7 @@ function startlevel(n) {
     document.getElementById('hud').classList.remove('hidden');
     document.getElementById('lvlnum').textContent = n;
     document.getElementById('best').textContent = save.best;
-    if (is_mobile) {
-        document.getElementById('touchcontrols').classList.remove('hidden');
-        document.getElementById('joystickwrap').classList.remove('hidden');
-    }
+    showmobilecontrols();
     document.getElementById('bossbarwrap').classList.toggle('hidden', !level.boss);
     hideoverlays();
 }
