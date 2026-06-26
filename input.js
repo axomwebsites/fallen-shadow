@@ -89,7 +89,11 @@ function setupinput() {
     bindtouch('slidebtn', doslide);
     bindtouch('crouchbtn', togglecrouch);
 
-    window.is_mobile = ('ontouchstart' in window) && window.innerWidth < 1024;
+    window.is_mobile = ('ontouchstart' in window) || window.innerWidth < 1024;
+    showmobilecontrols();
+}
+
+function showmobilecontrols() {
     if (window.is_mobile) {
         document.getElementById('joystickwrap').classList.remove('hidden');
         document.getElementById('touchcontrols').classList.remove('hidden');
