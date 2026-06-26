@@ -1,18 +1,116 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no,viewport-fit=cover">
-<title>fallen shadow</title>
-<link rel="manifest" href="manifest.json">
-<link rel="stylesheet" href="css/style.css">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>the fallen shadow</title>
+    <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-<div id="container">
-<canvas id="gamecanvas"></canvas>
-<div id="ui"></div>
-<div id="touchcontrolslayer"></div>
-</div>
-<script type="module" src="js/game.js"></script>
+    <div id="game">
+        <canvas id="cv"></canvas>
+
+        <div id="hud" class="hidden">
+            <div id="pausebtn"><span></span><span></span><span></span></div>
+            <div id="hudinfo">
+                <div class="lvl">level <span id="lvlnum">1</span></div>
+                <div>score <span id="score">0</span></div>
+                <div>best <span id="best">0</span></div>
+            </div>
+        </div>
+
+        <div id="bossbarwrap" class="hidden">
+            <div id="bossbar"><div id="bossfill"></div></div>
+            <div id="bossphase">normal</div>
+        </div>
+
+        <div id="touchcontrols" class="hidden">
+            <div class="tcleft">
+                <div class="tbtn" id="crouchbtn">crouch</div>
+                <div class="tbtn" id="slidebtn">slide<div class="cdfill" id="slidecd"></div></div>
+            </div>
+            <div class="tcright">
+                <div class="tbtn" id="jumpbtn">jump</div>
+            </div>
+        </div>
+
+        <div id="joystickwrap" class="hidden">
+            <div id="joystickbase">
+                <div id="joystickknob"></div>
+            </div>
+        </div>
+
+        <div class="overlay" id="startscreen">
+            <h1 class="title">the fallen shadow</h1>
+            <div class="subtitle">a tale of light and darkness</div>
+            <button class="btn" id="playbtn">play</button>
+            <button class="btn" id="levelsbtn">levels</button>
+            <button class="btn" id="settingsbtn2">settings</button>
+            <div class="hint">move right, jump over gaps, slide under hazards. reach the door at each level's end. survive 30 levels and 3 bosses to save your beloved.</div>
+        </div>
+
+        <div class="overlay hidden" id="storyscreen">
+            <div id="storycanvaswrap">
+                <canvas id="storycv"></canvas>
+            </div>
+            <div id="storytext"></div>
+            <button class="btn hidden" id="storyskipbtn">skip</button>
+        </div>
+
+        <div class="overlay hidden" id="levelselect">
+            <h1 class="title" style="font-size:clamp(24px,6vw,44px)">select level</h1>
+            <div class="levelgrid" id="levelgrid"></div>
+            <button class="btn" id="lvlback">back</button>
+        </div>
+
+        <div class="overlay hidden" id="pausemenu">
+            <div class="panel">
+                <h1 class="title" style="font-size:32px">paused</h1>
+                <button class="btn" id="resumebtn">resume</button>
+                <button class="btn" id="menubtn">main menu</button>
+                <button class="btn" id="settingsbtn">settings</button>
+            </div>
+        </div>
+
+        <div class="overlay hidden" id="settingsmenu">
+            <div class="panel" style="background:rgba(15,12,22,.96);border:1px solid #4a3f60;border-radius:14px;padding:30px;">
+                <h1 class="title" style="font-size:32px">settings</h1>
+                <div class="setrow"><span>sound</span><div class="toggle on" id="soundtoggle"><div class="knob"></div></div></div>
+                <div class="setrow"><span>screen shake</span><div class="toggle on" id="shaketoggle"><div class="knob"></div></div></div>
+                <div class="setrow"><span>particles</span><div class="toggle on" id="particletoggle"><div class="knob"></div></div></div>
+                <button class="btn" id="settingsback" style="margin-top:20px">back</button>
+            </div>
+        </div>
+
+        <div class="overlay hidden" id="gameover">
+            <div class="deathmsg" id="deathtitle">you died</div>
+            <div class="subtitle" id="deathsub">the shadow claims another soul...</div>
+            <button class="btn" id="retrybtn">retry</button>
+            <button class="btn" id="gomenubtn">main menu</button>
+        </div>
+
+        <div class="overlay hidden" id="levelcomplete">
+            <div class="deathmsg" style="color:#6c9" id="lctitle">level clear</div>
+            <div class="subtitle" id="lcsub">a glimmer of hope...</div>
+            <button class="btn" id="nextbtn">next level</button>
+            <button class="btn" id="lcmenubtn">main menu</button>
+        </div>
+
+        <div class="overlay hidden" id="endscreen" style="background:#000;">
+            <div id="endtext"></div>
+        </div>
+
+        <div class="fadeblack" id="fadeblack"></div>
+    </div>
+
+    <script src="utils.js"></script>
+    <script src="audio.js"></script>
+    <script src="input.js"></script>
+    <script src="player.js"></script>
+    <script src="levels.js"></script>
+    <script src="boss.js"></script>
+    <script src="story.js"></script>
+    <script src="ui.js"></script>
+    <script src="game.js"></script>
 </body>
 </html>
