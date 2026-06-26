@@ -32,8 +32,11 @@ function makelevel(n) {
             lv.platforms.push({ x: x, y: y, w: pw, h: 200, ground: true });
             x += pw;
         } else if (r < 0.32) {
-            const pw = 180 + rng() * 100;
-            lv.hazards.push({ x: x, y: y - 10, w: pw, h: 20, type: 'spike' });
+            const gapw = 80 + rng() * 70;
+            const pitdepth = 60 + rng() * 40;
+            lv.hazards.push({ x: x + 10, y: y + 20, w: gapw - 20, h: pitdepth, type: 'spike' });
+            x += gapw;
+            const pw = 100 + rng() * 80;
             lv.platforms.push({ x: x, y: y, w: pw, h: 200, ground: true });
             x += pw;
         } else if (r < 0.46 && n > 3) {
