@@ -2,6 +2,8 @@ const keys = {};
 let joystickactive = false;
 let joystickdx = 0;
 let joystickdy = 0;
+let editmode = false;
+let controlsmode = 'auto'; 
 
 function setupinput() {
     window.addEventListener('keydown', e => {
@@ -89,17 +91,41 @@ function setupinput() {
     bindtouch('slidebtn', doslide);
     bindtouch('crouchbtn', togglecrouch);
 
-    window.is_mobile = ('ontouchstart' in window) || window.innerWidth < 1024;
-    showmobilecontrols();
+    window.is_mobile = ('ontouchstart' in window) && window.innerWidth < 1024;
+    if (controlsmode === 'auto') {
+        if (is_mobile) { showmobilecontrols(); } else { showdesktopcontrols(); }
+    } else if (controlsmode === 'mobile') {
+        showmobilecontrols();
+    } else {
+        showdesktopcontrols();
+    }
+    loadhudpositions();
+    setupdragging();
 }
 
 function showmobilecontrols() {
-    if (window.is_mobile) {
-        document.getElementById('joystickwrap').classList.remove('hidden');
-        document.getElementById('touchcontrols').classList.remove('hidden');
-    } else {
+    document.getElementById('joystickwrap').classList.remove('hidden');
+    document.getElementById('touchcontrols').classList.remove('hidden');
+}
+
+function showdesktopcontrols() {
+    document.getElementById('joystickwrap').classList.add('hidden');
+    document.getElementById('touchcontrols').classlist.add('hidden');
+}
+
+function updatecontrolvisibility() {
+    if (state !== stateplay && state !== statepause) {
         document.getElementById('joystickwrap').classList.add('hidden');
         document.getElementById('touchcontrols').classList.add('hidden');
+        return;
+    }
+    if (controlsmode === 'desktop') {
+        showdesktopcontrols();
+    } else if (controlsmode === 'mobile') {
+        showmobilecontrols();
+    } else {
+        if (is_mobile) showmobilecontrols();
+        else showdesktopcontrols();
     }
 }
 
@@ -113,6 +139,10 @@ function doslide() {
     player.slidetime = 400;
     player.slidecd = 15000;
     player.crouch = false;
+    if (player.onground) {
+        let newh = player.h * 0.45;
+        player.y += (player.h - newh);
+    }
     player.vx = 7 * player.facing;
     beep(300, 0.2, 'sawtooth', 0.12);
     burst(player.x, player.y + player.h, '#aaa', 8);
@@ -120,5 +150,90 @@ function doslide() {
 
 function togglecrouch() {
     if (player.sliding) return;
+    let oldh = player.crouch ? player.h * 0.6 : player.h;
     player.crouch = !player.crouch;
+    let newh = player.crouch ? player.h * 0.6 : player.h;
+    if (player.onground) {
+        player.y += (oldh - newh);
+    }
+}
+
+function setupdragging() {
+    const draggables = document.querySelectorAll('.draggable');
+    draggables.forEach(el => {
+        el.addEventListener('mousedown', startdrag);
+        el.addEventListener('touchstart', startdrag, { passive: false });
+    });
+}
+
+let dragtarget = null;
+let dragoffsetx = 0;
+let dragoffsety = 0;
+
+function startdrag(e) {
+    if (!editmode) return;
+    e.preventDefault();
+    const el = e.currentTarget;
+    dragtarget = el;
+    const rect = el.getBoundingClientRect();
+    const clientx = e.touches ? e.touches[0].clientX : e.clientX;
+    const clienty = e.touches ? e.touches[0].clientY : e.clientY;
+    dragoffsetx = clientx - rect.left;
+    dragoffsety = clienty - rect.top;
+    el.classList.add('dragging');
+    document.addEventListener('mousemove', onmove);
+    document.addEventListener('mouseup', enddrag);
+    document.addEventListener('touchmove', onmove, { passive: false });
+    document.addEventListener('touchend', enddrag);
+}
+
+function onmove(e) {
+    e.preventDefault();
+    if (!dragtarget) return;
+    const clientx = e.touches ? e.touches[0].clientX : e.clientX;
+    const clienty = e.touches ? e.touches[0].clientY : e.clientY;
+    let left = clientx - dragoffsetx;
+    let top = clienty - dragoffsety;
+    const parentrect = dragtarget.parentElement.getBoundingClientRect();
+    const maxx = parentrect.width - dragtarget.offsetWidth;
+    const maxy = parentrect.height - dragtarget.offsetHeight;
+    left = Math.max(0, Math.min(left, maxx));
+    top = Math.max(0, Math.min(top, maxy));
+    dragtarget.style.left = left + 'px';
+    dragtarget.style.top = top + 'px';
+    savehudposition(dragtarget);
+}
+
+function enddrag(e) {
+    if (dragtarget) {
+        dragtarget.classList.remove('dragging');
+        dragtarget = null;
+    }
+    document.removeEventListener('mousemove', onmove);
+    document.removeEventListener('mouseup', enddrag);
+    document.removeEventListener('touchmove', onmove);
+    document.removeEventListener('touchend', enddrag);
+}
+
+function savehudposition(el) {
+    const id = el.id;
+    const left = parseFloat(el.style.left) || 0;
+    const top = parseFloat(el.style.top) || 0;
+    let positions = JSON.parse(localStorage.getItem('hudpositions') || '{}');
+    positions[id] = { left, top };
+    localStorage.setItem('hudpositions', JSON.stringify(positions));
+}
+
+function loadhudpositions() {
+    const positions = JSON.parse(localStorage.getItem('hudpositions') || '{}');
+    const elements = ['joystickwrap', 'touchcontrols'];
+    elements.forEach(id => {
+        const el = document.getElementById(id);
+        if (el && positions[id]) {
+            el.style.left = positions[id].left + 'px';
+            el.style.top = positions[id].top + 'px';
+            el.style.position = 'absolute';
+            el.classList.add('draggable');
+        }
+    });
 }
