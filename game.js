@@ -42,7 +42,7 @@ let shake = 0;
 let camx = 0,
     camy = 0,
     camzoom = 1,
-    camtargetzoom = 1;
+    camtargetzoom = 1.3;
 let bossdeadflag = false;
 let endseq = 0,
     endtimer = 0,
@@ -53,6 +53,7 @@ let endseq = 0,
     wifefell = false,
     wifefally = 0;
 let settingsfrompause = false;
+let graintimer = 0;
 
 function startlevel(n) {
     curlevel = n;
@@ -69,13 +70,14 @@ function startlevel(n) {
     player.facing = 1;
     player.spawnx = 100;
     player.spawny = 320;
+    player.footsteptimer = 0;
     score = 0;
     particles = [];
     shake = 0;
     camx = 0;
     camy = 0;
     camzoom = 1;
-    camtargetzoom = 1;
+    camtargetzoom = 1.3;
     state = stateplay;
     bossdeadflag = false;
     endseq = 0;
@@ -185,7 +187,7 @@ function updateend(dt) {
         if (endtimer > 2200) { showendtext();
             endseq = 9; }
     }
-    const targetcamx = player.x - W / 2 / camtargetzoom + 100;
+    const targetcamx = player.x - (W / camtargetzoom) * 0.4;
     camx += (targetcamx - camx) * 0.04;
     camzoom += (camtargetzoom - camzoom) * 0.03;
 }
@@ -419,12 +421,24 @@ function update(dt) {
     updateparticles(dt);
     shake *= 0.88;
 
-    const tz = 1;
+    if (p.onground && Math.abs(p.vx) > 0.8) {
+        if (!p.footsteptimer) p.footsteptimer = 0;
+        p.footsteptimer += dt;
+        if (p.footsteptimer > 300) {
+            footstepsfx();
+            p.footsteptimer = 0;
+        }
+    } else {
+        p.footsteptimer = 300;
+    }
+
+    const tz = 1.3;
     camtargetzoom = tz;
-    let tcx = p.x - W * 0.35;
-    tcx = Math.max(0, Math.min(level.length - W, tcx));
+    let tcx = p.x - (W / camtargetzoom) * 0.4;
+    tcx = Math.max(0, Math.min(level.length - (W / camtargetzoom), tcx));
     camx += (tcx - camx) * 0.12;
     camy = 0;
+    camzoom += (camtargetzoom - camzoom) * 0.03;
 }
 
 function render() {
@@ -445,27 +459,48 @@ function render() {
         ctx.translate((Math.random() - 0.5) * shake, (Math.random() - 0.5) * shake);
     }
 
-    const grad = ctx.createLinearGradient(0, 0, 0, H);
-    grad.addColorStop(0, th.sky);
+    ctx.translate(W / 2, H / 2);
+    ctx.scale(camzoom, camzoom);
+    ctx.translate(-W / 2, -H / 2);
+
+    const grad = ctx.createLinearGradient(camx, 0, camx, H);
+    grad.addColorStop(0, '#050308');
+    grad.addColorStop(0.5, th.sky);
     grad.addColorStop(1, th.fog);
     ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, W, H);
+    ctx.fillRect(camx - 50, 0, W + 100, H);
+
+    ctx.save();
+    ctx.globalAlpha = 0.08;
+    for (let i = 0; i < 6; i++) {
+        let angle = performance.now() / 8000 + i * 1.2;
+        let x = camx + Math.sin(angle) * 300 + 200;
+        ctx.fillStyle = '#7af';
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x + 60, 0);
+        ctx.lineTo(x + 300 + Math.sin(angle + 0.5) * 150, H);
+        ctx.lineTo(x - 300 + Math.sin(angle - 0.5) * 150, H);
+        ctx.closePath();
+        ctx.fill();
+    }
+    ctx.restore();
 
     ctx.fillStyle = th.fog;
-    for (let i = 0; i < 8; i++) {
-        const bx = (i * 300 - camx * 0.3) % (W + 400) - 200;
-        ctx.globalAlpha = 0.4;
-        ctx.fillRect(bx, 180, 160, 300);
+    for (let i = 0; i < 10; i++) {
+        const bx = (i * 250 - camx * 0.2) % (W + 500) - 200;
+        ctx.globalAlpha = 0.3 + Math.sin(i + performance.now() / 5000) * 0.1;
+        ctx.fillRect(bx, 150, 120, 400);
     }
     ctx.globalAlpha = 1;
     ctx.fillStyle = th.accent;
-    ctx.globalAlpha = 0.15;
-    for (let i = 0; i < 10; i++) {
-        const bx = (i * 220 - camx * 0.5) % (W + 300) - 150;
+    ctx.globalAlpha = 0.1;
+    for (let i = 0; i < 8; i++) {
+        const bx = (i * 300 - camx * 0.4) % (W + 400) - 200;
         ctx.beginPath();
-        ctx.moveTo(bx, 400);
-        ctx.lineTo(bx + 80, 260);
-        ctx.lineTo(bx + 160, 400);
+        ctx.moveTo(bx, 420);
+        ctx.lineTo(bx + 60, 280);
+        ctx.lineTo(bx + 120, 420);
         ctx.fill();
     }
     ctx.globalAlpha = 1;
@@ -476,16 +511,21 @@ function render() {
         if (sx > W || sx + pl.w < 0) continue;
         ctx.fillStyle = th.ground;
         ctx.fillRect(sx, sy, pl.w, pl.h);
+        ctx.fillStyle = 'rgba(0,0,0,0.6)';
+        ctx.fillRect(sx, sy, pl.w, 8);
         ctx.fillStyle = th.accent;
-        ctx.fillRect(sx, sy, pl.w, 5);
-        ctx.fillStyle = 'rgba(0,0,0,0.25)';
-        ctx.fillRect(sx, sy + 5, pl.w, 4);
+        ctx.globalAlpha = 0.15;
+        ctx.fillRect(sx, sy + 8, pl.w, 2);
+        ctx.globalAlpha = 1;
     }
     for (const m of level.movers) {
         const sx = m.x - camx,
             sy = m.y - camy;
-        ctx.fillStyle = '#6a5a8a';
+        ctx.fillStyle = '#3a3050';
+        ctx.shadowColor = '#6af';
+        ctx.shadowBlur = 15;
         ctx.fillRect(sx, sy, m.w, m.h);
+        ctx.shadowBlur = 0;
         ctx.fillStyle = th.accent;
         ctx.fillRect(sx, sy, m.w, 4);
     }
@@ -493,7 +533,9 @@ function render() {
         const sx = hz.x - camx,
             sy = hz.y - camy;
         if (hz.type === 'spike') {
-            ctx.fillStyle = '#c33';
+            ctx.fillStyle = '#a33';
+            ctx.shadowColor = '#f44';
+            ctx.shadowBlur = 10;
             const n = Math.floor(hz.w / 16);
             for (let i = 0; i < n; i++) {
                 ctx.beginPath();
@@ -502,12 +544,13 @@ function render() {
                 ctx.lineTo(sx + i * 16 + 16, sy + hz.h);
                 ctx.fill();
             }
+            ctx.shadowBlur = 0;
         } else {
-            ctx.fillStyle = '#553';
+            ctx.fillStyle = '#332';
             ctx.fillRect(sx, sy, hz.w, hz.h);
-            ctx.fillStyle = '#775';
+            ctx.fillStyle = '#553';
             ctx.fillRect(sx, sy, hz.w, 4);
-            ctx.fillStyle = '#c33';
+            ctx.fillStyle = '#a33';
             ctx.fillRect(sx, sy + hz.h - 3, hz.w, 3);
         }
     }
@@ -517,18 +560,21 @@ function render() {
         ctx.save();
         ctx.translate(sx, sy);
         ctx.rotate(s.a);
-        ctx.fillStyle = '#aaa';
+        ctx.shadowColor = '#f80';
+        ctx.shadowBlur = 20;
+        ctx.fillStyle = '#ccc';
         ctx.beginPath();
         for (let i = 0; i < 12; i++) {
             const a = i / 12 * Math.PI * 2;
-            const r = i % 2 ? s.r : s.r * 0.7;
+            const r = i % 2 ? s.r : s.r * 0.6;
             ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r);
         }
         ctx.closePath();
         ctx.fill();
-        ctx.fillStyle = '#666';
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = '#444';
         ctx.beginPath();
-        ctx.arc(0, 0, s.r * 0.4, 0, 7);
+        ctx.arc(0, 0, s.r * 0.3, 0, 7);
         ctx.fill();
         ctx.restore();
     }
@@ -536,10 +582,13 @@ function render() {
         if (c.got) continue;
         const sx = c.x - camx,
             sy = c.y - camy + Math.sin(performance.now() / 300 + c.x) * 4;
+        ctx.shadowColor = '#fd6';
+        ctx.shadowBlur = 20;
         ctx.fillStyle = '#fd6';
         ctx.beginPath();
         ctx.arc(sx, sy, 8, 0, 7);
         ctx.fill();
+        ctx.shadowBlur = 0;
         ctx.strokeStyle = '#a80';
         ctx.lineWidth = 2;
         ctx.stroke();
@@ -551,24 +600,35 @@ function render() {
     if (!level.doorhidden || (level.boss && level.boss.dead)) {
         const sx = level.doorx - camx,
             sy = 380 - camy;
+        ctx.shadowColor = '#a8f';
+        ctx.shadowBlur = 30;
         ctx.fillStyle = '#1a1020';
         ctx.fillRect(sx - 4, sy - 70, 40, 70);
         const glow = 0.5 + Math.sin(performance.now() / 300) * 0.3;
         ctx.fillStyle = 'rgba(180,140,255,' + glow + ')';
         ctx.fillRect(sx, sy - 62, 28, 58);
-        ctx.shadowColor = '#a8f';
-        ctx.shadowBlur = 20;
-        ctx.fillRect(sx, sy - 62, 28, 58);
         ctx.shadowBlur = 0;
     }
 
+    ctx.shadowColor = 'rgba(0,0,0,0.8)';
+    ctx.shadowBlur = 20;
     if (player.alive) drawplayer(camx, camy);
+    ctx.shadowBlur = 0;
     drawparticles(camx, camy);
     ctx.restore();
 
-    const vg = ctx.createRadialGradient(W / 2, H / 2, H * 0.3, W / 2, H / 2, H * 0.8);
+    graintimer += 1;
+    if (graintimer % 2 === 0) {
+        for (let i = 0; i < 60; i++) {
+            ctx.fillStyle = `rgba(255,255,255,${Math.random() * 0.025})`;
+            ctx.fillRect(Math.random() * W, Math.random() * H, 2, 2);
+        }
+    }
+
+    const vg = ctx.createRadialGradient(W / 2, H / 2, H * 0.1, W / 2, H / 2, H * 0.9);
     vg.addColorStop(0, 'rgba(0,0,0,0)');
-    vg.addColorStop(1, 'rgba(0,0,0,0.55)');
+    vg.addColorStop(0.5, 'rgba(0,0,0,0.2)');
+    vg.addColorStop(1, 'rgba(0,0,0,0.7)');
     ctx.fillStyle = vg;
     ctx.fillRect(0, 0, W, H);
 }
