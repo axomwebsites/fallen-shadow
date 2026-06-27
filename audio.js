@@ -39,3 +39,35 @@ function winsfx() {
 }
 
 function bosssfx() { beep(80, 0.5, 'sawtooth', 0.25); }
+
+function footstepsfx() {
+    if (!settings.sound) return;
+    const a = getaudioctx();
+    if (!a) return;
+    const buffersize = a.sampleRate * 0.08;
+    const buffer = a.createBuffer(1, buffersize, a.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < buffersize; i++) {
+        data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (buffersize * 0.4));
+    }
+    const source = a.createBufferSource();
+    source.buffer = buffer;
+
+    const gain = a.createGain();
+    gain.gain.value = 0.12;
+
+    const delay = a.createDelay(0.5);
+    delay.delayTime.value = 0.2;
+    const feedback = a.createGain();
+    feedback.gain.value = 0.25;
+
+    delay.connect(feedback);
+    feedback.connect(delay);
+    delay.connect(a.destination);
+
+    source.connect(gain);
+    gain.connect(delay);
+    gain.connect(a.destination);
+
+    source.start();
+}
