@@ -27,11 +27,15 @@ function setupinput() {
     const base = document.getElementById('joystickbase');
     const knob = document.getElementById('joystickknob');
     let touching = false;
-    const rect = base.getBoundingClientRect();
-    const radius = 100 / 2 - 22;
+    let radius = 100 / 2 - 22;
+
+    function getrect() {
+        return base.getBoundingClientRect();
+    }
 
     function handletouch(e) {
         e.preventDefault();
+        const rect = getrect();
         const touch = e.touches ? e.touches[0] : e;
         const cx = rect.left + rect.width / 2;
         const cy = rect.top + rect.height / 2;
@@ -44,7 +48,7 @@ function setupinput() {
         joystickdy = dy / max;
         knob.style.transform = `translate(${-50 + (dx / radius) * 50}%, ${-50 + (dy / radius) * 50}%)`;
         joystickactive = true;
-        if (Math.abs(joystickdx) > 0.2) {
+        if (Math.abs(joystickdx) > 0.15) {
             if (joystickdx > 0) { keys.right = true; keys.left = false; } else { keys.left = true; keys.right = false; }
         } else {
             keys.left = false; keys.right = false;
@@ -139,8 +143,8 @@ function doslide() {
     player.slidetime = 400;
     player.slidecd = 15000;
     player.crouch = false;
+    let newh = player.h * 0.45;
     if (player.onground) {
-        let newh = player.h * 0.45;
         player.y += (player.h - newh);
     }
     player.vx = 7 * player.facing;
@@ -159,8 +163,11 @@ function togglecrouch() {
 }
 
 function setupdragging() {
-    const draggables = document.querySelectorAll('.draggable');
-    draggables.forEach(el => {
+    const elements = ['joystickwrap', 'touchcontrols'];
+    elements.forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.classList.add('draggable');
         el.addEventListener('mousedown', startdrag);
         el.addEventListener('touchstart', startdrag, { passive: false });
     });
@@ -236,4 +243,4 @@ function loadhudpositions() {
             el.classList.add('draggable');
         }
     });
-}
+        }
