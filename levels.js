@@ -32,7 +32,7 @@ function makelevel(n) {
             lv.platforms.push({ x: x, y: y, w: pw, h: 200, ground: true });
             x += pw;
         } else if (r < 0.32) {
-            const gapw = 80 + rng() * 70;
+            const gapw = 60 + rng() * 70;
             const pitdepth = 60 + rng() * 40;
             lv.hazards.push({ x: x + 10, y: y + 20, w: gapw - 20, h: pitdepth, type: 'spike' });
             x += gapw;
@@ -113,4 +113,4 @@ function makeboss(n) {
         jumpt: 0,
         hover: 0
     };
-        }
+         }
