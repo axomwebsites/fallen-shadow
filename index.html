@@ -70,6 +70,8 @@
                 <button class="btn" id="menubtn">main menu</button>
                 <button class="btn" id="settingsbtn">settings</button>
                 <button class="btn" id="edithudbtn">edit hud</button>
+                <button class="btn" id="skineditorbtn">skin editor</button>
+                <button class="btn" id="leveleditorbtn">level editor</button>
             </div>
         </div>
 
@@ -109,6 +111,37 @@
         </div>
 
         <div class="fadeblack" id="fadeblack"></div>
+
+        <div class="overlay hidden" id="skineditor" style="z-index:20;background:rgba(0,0,0,0.9);">
+            <h1 class="title">skin editor</h1>
+            <div style="display:flex;gap:20px;flex-wrap:wrap;justify-content:center;">
+                <div><label>color</label><input type="color" id="skincolor" value="#d9d2b8" /></div>
+                <div><label>hood color</label><input type="color" id="skinhood" value="#100c16" /></div>
+                <div><label>size</label><input type="range" id="skinsize" min="0.5" max="2" step="0.1" value="1" /></div>
+            </div>
+            <button class="btn" id="skinsave">save skin</button>
+            <button class="btn" id="skinreset">reset</button>
+            <button class="btn" id="skinclose">close</button>
+        </div>
+
+        <div class="overlay hidden" id="leveleditor" style="z-index:20;background:rgba(0,0,0,0.95);overflow-y:auto;max-height:90%;">
+            <h1 class="title">level editor</h1>
+            <div style="display:flex;flex-wrap:wrap;gap:10px;justify-content:center;max-width:800px;">
+                <button class="btn smallbtn" data-add="platform">platform</button>
+                <button class="btn smallbtn" data-add="spike">spike</button>
+                <button class="btn smallbtn" data-add="saw">saw</button>
+                <button class="btn smallbtn" data-add="coin">coin</button>
+                <button class="btn smallbtn" data-add="enemy">enemy</button>
+                <button class="btn smallbtn" data-add="mover">mover</button>
+                <button class="btn smallbtn" data-add="boss">boss</button>
+            </div>
+            <canvas id="editorcanvas" style="border:1px solid #444;width:100%;max-width:800px;aspect-ratio:16/9;background:#0a0a12;"></canvas>
+            <div style="display:flex;gap:10px;margin-top:10px;">
+                <button class="btn" id="editorsave">save level</button>
+                <button class="btn" id="editorload">load level</button>
+                <button class="btn" id="editorclose">close</button>
+            </div>
+        </div>
     </div>
 
     <script src="utils.js"></script>
