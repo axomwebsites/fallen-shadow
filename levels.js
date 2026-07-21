@@ -7,15 +7,15 @@ function makelevel(n) {
     const isboss = (n % 10 === 0);
 
     if (isboss) {
-        for (let i = 0; i < 26; i++) {
+        for (let i = 0; i < 30; i++) {
             lv.platforms.push({ x: i * 60, y: groundy, w: 60, h: 200, ground: true });
         }
         if (lv.horror) {
-            for (let i = 0; i < 10; i++) {
-                lv.enemies.push({ x: 200 + i * 120, y: groundy - 30, w: 24, h: 30, vx: 1, dir: 1, alive: true });
+            for (let i = 0; i < 12; i++) {
+                lv.enemies.push({ x: 200 + i * 130, y: groundy - 30, w: 28, h: 34, vx: 1.2, dir: 1, alive: true });
             }
         }
-        lv.length = 26 * 60;
+        lv.length = 30 * 60;
         lv.boss = makeboss(n);
         lv.doorx = lv.length - 100;
         lv.doorhidden = true;
@@ -23,7 +23,7 @@ function makelevel(n) {
     }
 
     let x = 0;
-    const segs = 30 + n * 2;
+    const segs = 35 + n * 2;
     let y = groundy;
     lv.platforms.push({ x: 0, y: y, w: 300, h: 200, ground: true });
     x = 300;
@@ -33,13 +33,15 @@ function makelevel(n) {
     for (let s = 0; s < segs; s++) {
         const r = rng();
         let type = 0;
-        if (r < 0.15 && n > 2) type = 1;
-        else if (r < 0.28 && n > 3) type = 2; 
-        else if (r < 0.40 && n > 4) type = 3;
-        else if (r < 0.52 && n > 6) type = 4; 
-        else if (r < 0.64 && n > 8) type = 5; 
-        else if (r < 0.76 && n > 10) type = 6; 
-        else type = 0; 
+        if (r < 0.12 && n > 2) type = 1;
+        else if (r < 0.24 && n > 3) type = 2;
+        else if (r < 0.36 && n > 4) type = 3;
+        else if (r < 0.48 && n > 6) type = 4;
+        else if (r < 0.58 && n > 8) type = 5;
+        else if (r < 0.68 && n > 10) type = 6;
+        else if (r < 0.78 && n > 12) type = 7;
+        else if (r < 0.88 && n > 14) type = 8;
+        else type = 0;
 
         if (type === lasttype && rng() < 0.5) type = 0;
         lasttype = type;
@@ -73,7 +75,7 @@ function makelevel(n) {
             lv.platforms.push({ x: x, y: y, w: pw, h: 200, ground: true });
             const count = 1 + Math.floor(rng() * 2);
             for (let i = 0; i < count; i++) {
-                lv.enemies.push({ x: x + 20 + i * 40, y: y - 30, w: 24, h: 30, vx: 0.8 + rng() * 0.6, dir: 1, alive: true });
+                lv.enemies.push({ x: x + 20 + i * 40, y: y - 30, w: 26, h: 32, vx: 0.8 + rng() * 0.6, dir: 1, alive: true });
             }
             x += pw;
         } else if (type === 5) {
@@ -88,6 +90,22 @@ function makelevel(n) {
             lv.platforms.push({ x: x, y: y, w: pw, h: 200, ground: true });
             lv.saws.push({ x: x + pw * 0.5, y: y - 24, r: 24, a: 0, sp: 0.12, bx: x + pw * 0.5, range: pw * 0.35, move: rng() < 0.5, ph: rng() * 6 });
             x += pw;
+        } else if (type === 7) {
+            const pw = 100 + rng() * 80;
+            lv.platforms.push({ x: x, y: y, w: pw, h: 200, ground: true });
+            const count = 1 + Math.floor(rng() * 2);
+            for (let i = 0; i < count; i++) {
+                lv.movers.push({ x0: x + 20 + i * 50, x: x + 20 + i * 50, y: y - 60 - rng() * 40, w: 16, h: 16, range: 40 + rng() * 40, dir: 1, sp: 1.5 + rng() * 1.5, axis: rng() < 0.5 ? 'x' : 'y', phase: rng() * 6, spike: true });
+            }
+            x += pw;
+        } else if (type === 8) {
+            const pw = 120 + rng() * 80;
+            lv.platforms.push({ x: x, y: y, w: pw, h: 200, ground: true });
+            const count = 2 + Math.floor(rng() * 3);
+            for (let i = 0; i < count; i++) {
+                lv.hazards.push({ x: x + 10 + i * 25, y: y - 20, w: 16, h: 20, type: 'spike' });
+            }
+            x += pw;
         } else {
             const pw = 120 + rng() * 120;
             lv.platforms.push({ x: x, y: y, w: pw, h: 200, ground: true });
@@ -99,7 +117,7 @@ function makelevel(n) {
             lv.coins.push({ x: x + 30, y: y - 100 - rng() * 40, got: false });
         }
         if (rng() < 0.15 && n > 8) {
-            lv.enemies.push({ x: x + 20, y: y - 80 - rng() * 30, w: 24, h: 30, vx: 0.5 + rng() * 0.5, dir: 1, alive: true });
+            lv.enemies.push({ x: x + 20, y: y - 80 - rng() * 30, w: 26, h: 32, vx: 0.5 + rng() * 0.5, dir: 1, alive: true });
         }
     }
     lv.platforms.push({ x: x, y: y, w: 220, h: 200, ground: true });
@@ -143,6 +161,8 @@ function makeboss(n) {
         baitt: 0,
         telegraph: 0,
         jumpt: 0,
-        hover: 0
+        hover: 0,
+        greenballs: [],
+        balltimer: 0
     };
-}
+}V
