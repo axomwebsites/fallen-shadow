@@ -137,16 +137,36 @@ function dojump() {
     player.jumpbuf = 120;
 }
 
+function snap_to_ground() {
+    if (typeof level === 'undefined' || !level) return false;
+    const allplat = [...level.platforms, ...level.movers];
+    const ph = player.crouch ? player.h * 0.6 : (player.sliding ? player.h * 0.45 : player.h);
+    for (const pl of allplat) {
+        if (player.x + player.w > pl.x && player.x < pl.x + pl.w) {
+            if (player.y + ph >= pl.y - 5 && player.y + ph <= pl.y + 20) {
+                player.y = pl.y - ph;
+                player.vy = 0;
+                player.onground = true;
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
 function doslide() {
     if (player.slidecd > 0 || player.sliding || !player.onground) return;
     player.sliding = true;
     player.slidetime = 400;
     player.slidecd = 15000;
     player.crouch = false;
-    let newh = player.h * 0.45;
+    
     if (player.onground) {
+        let newh = player.h * 0.45;
         player.y += (player.h - newh);
+        snap_to_ground();
     }
+    
     player.vx = 7 * player.facing;
     beep(300, 0.2, 'sawtooth', 0.12);
     burst(player.x, player.y + player.h, '#aaa', 8);
@@ -159,6 +179,7 @@ function togglecrouch() {
     let newh = player.crouch ? player.h * 0.6 : player.h;
     if (player.onground) {
         player.y += (oldh - newh);
+        snap_to_ground();
     }
 }
 
@@ -243,4 +264,4 @@ function loadhudpositions() {
             el.classList.add('draggable');
         }
     });
-        }
+}
