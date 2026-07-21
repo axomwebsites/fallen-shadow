@@ -38,6 +38,11 @@ let settingsfrompause = false;
 let graintimer = 0;
 let horrorenabled = false;
 
+const savedskin = localStorage.getItem('playerskin');
+if (savedskin) {
+    try { player.skin = JSON.parse(savedskin); } catch(e) {}
+}
+
 function startlevel(n) {
     curlevel = n;
     level = makelevel(n);
@@ -45,6 +50,7 @@ function startlevel(n) {
     if (horrorenabled) {
         scarydrone();
         setTimeout(scarydrone, 5000);
+        setTimeout(monsterroar, 2000);
     }
     player.x = 100; player.y = 320; player.vx = 0; player.vy = 0; player.alive = true;
     player.crouch = false; player.sliding = false; player.slidetime = 0; player.slidecd = 0;
@@ -60,11 +66,14 @@ function startlevel(n) {
 }
 
 function playerdie() {
+    if (!player.alive || player.godmode) {
+        if (player.godmode) { player.alive = true; return; }
+    }
     if (!player.alive) return;
     player.alive = false;
     hitsfx();
     shake = 18;
-    burst(player.x, player.y + player.h / 2, '#c44', 30);
+    burst(player.x, player.y + player.h/2, '#c44', 30);
     if (horrorenabled) scaryscreech();
     setTimeout(() => {
         state = statedead;
@@ -227,7 +236,8 @@ function drawbrokenheart(ctx, x, y, s) {
 
 function update(dt) {
     const p = player;
-    if (!p.alive) { updateparticles(dt); shake *= 0.9; return; }
+    if (!p.alive && !p.godmode) { updateparticles(dt); shake *= 0.9; return; }
+    if (p.godmode) p.alive = true;
 
     if (p.slidecd > 0) { p.slidecd -= dt; if (p.slidecd < 0) p.slidecd = 0; }
     const cd_el = document.getElementById('slidecd');
@@ -235,10 +245,11 @@ function update(dt) {
 
     let target = 0;
     if (controlsmode !== 'desktop' && (controlsmode === 'mobile' || is_mobile)) {
-        if (keys.right) target = 3.6;
-        else if (keys.left) target = -3.6;
+        if (keys.right) target = p.superspeed ? 8 : 3.6;
+        else if (keys.left) target = p.superspeed ? -8 : -3.6;
     } else {
-        if (keys.left) { target = -3.6; p.facing = -1; } else if (keys.right) { target = 3.6; p.facing = 1; }
+        if (keys.left) { target = p.superspeed ? -8 : -3.6; p.facing = -1; }
+        else if (keys.right) { target = p.superspeed ? 8 : 3.6; p.facing = 1; }
     }
     if (p.crouch) target *= 0.5;
     if (p.sliding) {
@@ -252,13 +263,14 @@ function update(dt) {
     if (p.jumpbuf > 0) p.jumpbuf -= dt;
     if (p.onground) p.coyote = 120;
     else p.coyote -= dt;
-    if (p.jumpbuf > 0 && p.coyote > 0 && !p.crouch) {
+    if ((p.jumpbuf > 0 && p.coyote > 0 && !p.crouch) || p.infinitejumps) {
         p.vy = -13.5;
         p.onground = false; p.coyote = 0; p.jumpbuf = 0; p.sliding = false;
         jumpsfx();
         p.squash = 0.7;
         burst(p.x + p.w/2, p.y + p.h, '#bbb', 6);
     }
+    if (p.infinitejumps) { p.coyote = 9999; p.jumpbuf = 9999; }
 
     p.vy += 0.7;
     if (p.vy > 16) p.vy = 16;
@@ -308,6 +320,16 @@ function update(dt) {
             }
         }
         if (!onplat) e.dir *= -1;
+        if (p.vy > 0 && p.x + p.w > e.x + 4 && p.x < e.x + e.w - 4) {
+            if (p.y + p.h > e.y && p.y + p.h < e.y + e.h/2 + 6) {
+                e.alive = false;
+                p.vy = -8;
+                burst(e.x + e.w/2, e.y, '#fa0', 12);
+                score += 100;
+                beep(500, 0.1, 'square', 0.1);
+                continue;
+            }
+        }
         if (p.x + p.w > e.x + 4 && p.x < e.x + e.w - 4 && p.y + ph > e.y + 4 && p.y < e.y + e.h - 4) {
             playerdie(); return;
         }
@@ -327,6 +349,14 @@ function update(dt) {
             const base = m._b || (m._b = m.y);
             m.y = base + Math.sin(m.phase + performance.now()/800 * m.sp) * 40;
             m.dy = m.y - prevy; m.dx = 0;
+        }
+        if (m.spike) {
+    
+            const dx = (p.x + p.w/2) - (m.x + m.w/2);
+            const dy = (p.y + ph/2) - (m.y + m.h/2);
+            if (Math.abs(dx) < m.w/2 + p.w/2 - 2 && Math.abs(dy) < m.h/2 + ph/2 - 2) {
+                playerdie(); return;
+            }
         }
     }
 
@@ -462,13 +492,21 @@ function render() {
     }
     for (const m of level.movers) {
         const sx = m.x - camx, sy = m.y - camy;
-        ctx.fillStyle = horrorenabled ? '#3a1010' : '#3a3050';
-        ctx.shadowColor = horrorenabled ? '#f00' : '#6af';
-        ctx.shadowBlur = 15;
-        ctx.fillRect(sx, sy, m.w, m.h);
-        ctx.shadowBlur = 0;
-        ctx.fillStyle = th.accent;
-        ctx.fillRect(sx, sy, m.w, 4);
+        if (m.spike) {
+            ctx.fillStyle = '#f44';
+            ctx.shadowColor = '#f00';
+            ctx.shadowBlur = 20;
+            ctx.fillRect(sx, sy, m.w, m.h);
+            ctx.shadowBlur = 0;
+        } else {
+            ctx.fillStyle = horrorenabled ? '#3a1010' : '#3a3050';
+            ctx.shadowColor = horrorenabled ? '#f00' : '#6af';
+            ctx.shadowBlur = 15;
+            ctx.fillRect(sx, sy, m.w, m.h);
+            ctx.shadowBlur = 0;
+            ctx.fillStyle = th.accent;
+            ctx.fillRect(sx, sy, m.w, 4);
+        }
     }
     for (const hz of level.hazards) {
         const sx = hz.x - camx, sy = hz.y - camy;
@@ -538,7 +576,10 @@ function render() {
         if (!e.alive) continue;
         const sx = e.x - camx, sy = e.y - camy;
         ctx.fillStyle = horrorenabled ? '#d44' : '#4a4';
+        ctx.shadowColor = horrorenabled ? '#f00' : '#0a0';
+        ctx.shadowBlur = 10;
         ctx.fillRect(sx, sy, e.w, e.h);
+        ctx.shadowBlur = 0;
         ctx.fillStyle = '#fff';
         ctx.fillRect(sx + 4, sy + 4, 4, 4);
         ctx.fillRect(sx + e.w - 8, sy + 4, 4, 4);
@@ -577,6 +618,11 @@ function render() {
         }
     }
 
+    ctx.fillStyle = 'rgba(0,0,0,0.03)';
+    for (let i = 0; i < H; i += 3) {
+        ctx.fillRect(0, i, W, 1);
+    }
+
     const vg = ctx.createRadialGradient(W/2, H/2, H*0.1, W/2, H/2, H*0.9);
     if (horrorenabled) {
         vg.addColorStop(0, 'rgba(0,0,0,0)');
@@ -589,6 +635,13 @@ function render() {
     }
     ctx.fillStyle = vg;
     ctx.fillRect(0, 0, W, H);
+
+    if (player.weapon && player.alive) {
+        ctx.fillStyle = 'rgba(255,200,50,0.1)';
+        ctx.beginPath();
+        ctx.arc(W/2, H/2, 60, 0, Math.PI*2);
+        ctx.fill();
+    }
 }
 
 let last = performance.now();
