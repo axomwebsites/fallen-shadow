@@ -114,3 +114,20 @@ function scaryscreech() {
     o.start();
     o.stop(a.currentTime + 0.3);
 }
+
+function monsterroar() {
+    if (!settings.sound) return;
+    const a = getaudioctx();
+    if (!a) return;
+    const o = a.createOscillator();
+    const g = a.createGain();
+    o.type = 'sawtooth';
+    o.frequency.setValueAtTime(80, a.currentTime);
+    o.frequency.exponentialRampToValueAtTime(30, a.currentTime + 0.5);
+    g.gain.setValueAtTime(0.25, a.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, a.currentTime + 0.5);
+    o.connect(g);
+    g.connect(a.destination);
+    o.start();
+    o.stop(a.currentTime + 0.5);
+}
