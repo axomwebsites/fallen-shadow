@@ -2,12 +2,18 @@ let level = null;
 const groundy = 380;
 
 function makelevel(n) {
-    const lv = { n, platforms: [], hazards: [], coins: [], movers: [], saws: [], boss: null, doorx: 0, length: 0, theme: themefor(n) };
+    const lv = { n, platforms: [], hazards: [], coins: [], movers: [], saws: [], enemies: [], boss: null, doorx: 0, length: 0, theme: themefor(n), horror: false };
+    if (n >= 21 && n <= 25) lv.horror = true;
     const isboss = (n % 10 === 0);
 
     if (isboss) {
         for (let i = 0; i < 26; i++) {
             lv.platforms.push({ x: i * 60, y: groundy, w: 60, h: 200, ground: true });
+        }
+        if (lv.horror) {
+            for (let i = 0; i < 10; i++) {
+                lv.enemies.push({ x: 200 + i * 120, y: groundy - 30, w: 24, h: 30, vx: 1, dir: 1, alive: true });
+            }
         }
         lv.length = 26 * 60;
         lv.boss = makeboss(n);
@@ -17,60 +23,83 @@ function makelevel(n) {
     }
 
     let x = 0;
-    const segs = 40 + n * 2;
+    const segs = 30 + n * 2;
     let y = groundy;
     lv.platforms.push({ x: 0, y: y, w: 300, h: 200, ground: true });
     x = 300;
     let rng = mulberry(n * 9301 + 49297);
+    let lasttype = 0;
 
     for (let s = 0; s < segs; s++) {
         const r = rng();
-        if (r < 0.18 && n > 1) {
-            const gap = 60 + rng() * (50 + n * 2.5);
+        let type = 0;
+        if (r < 0.15 && n > 2) type = 1;
+        else if (r < 0.28 && n > 3) type = 2; 
+        else if (r < 0.40 && n > 4) type = 3;
+        else if (r < 0.52 && n > 6) type = 4; 
+        else if (r < 0.64 && n > 8) type = 5; 
+        else if (r < 0.76 && n > 10) type = 6; 
+        else type = 0; 
+
+        if (type === lasttype && rng() < 0.5) type = 0;
+        lasttype = type;
+
+        if (type === 1) {
+            const gap = 50 + rng() * 70;
             x += gap;
-            const pw = 140 + rng() * 120;
+            const pw = 120 + rng() * 100;
             lv.platforms.push({ x: x, y: y, w: pw, h: 200, ground: true });
             x += pw;
-        } else if (r < 0.32) {
-            const gapw = 60 + rng() * 70;
-            const pitdepth = 60 + rng() * 40;
-            lv.hazards.push({ x: x + 10, y: y + 20, w: gapw - 20, h: pitdepth, type: 'spike' });
+        } else if (type === 2) {
+            const gapw = 60 + rng() * 80;
+            const pitdepth = 40 + rng() * 40;
+            lv.hazards.push({ x: x + 10, y: y + 10, w: gapw - 20, h: pitdepth, type: 'spike' });
             x += gapw;
-            const pw = 100 + rng() * 80;
+            const pw = 80 + rng() * 80;
             lv.platforms.push({ x: x, y: y, w: pw, h: 200, ground: true });
             x += pw;
-        } else if (r < 0.46 && n > 3) {
+        } else if (type === 3) {
+            const pw = 40 + rng() * 40;
+            const height = 80 + rng() * 60;
+            lv.platforms.push({ x: x, y: y - height, w: pw, h: height });
+            lv.platforms.push({ x: x, y: y, w: pw, h: 200, ground: true });
+            lv.hazards.push({ x: x + pw * 0.1, y: y - 50, w: pw * 0.8, h: 20, type: 'low' });
+            x += pw;
+            const pw2 = 100 + rng() * 80;
+            lv.platforms.push({ x: x, y: y, w: pw2, h: 200, ground: true });
+            x += pw2;
+        } else if (type === 4) {
             const pw = 120 + rng() * 80;
             lv.platforms.push({ x: x, y: y, w: pw, h: 200, ground: true });
-            lv.platforms.push({ x: x + pw * 0.3, y: y - 90 - rng() * 40, w: 90, h: 18 });
-            lv.coins.push({ x: x + pw * 0.3 + 30, y: y - 130 - rng() * 40, got: false });
+            const count = 1 + Math.floor(rng() * 2);
+            for (let i = 0; i < count; i++) {
+                lv.enemies.push({ x: x + 20 + i * 40, y: y - 30, w: 24, h: 30, vx: 0.8 + rng() * 0.6, dir: 1, alive: true });
+            }
             x += pw;
-        } else if (r < 0.58 && n > 5) {
-            const gap = 120 + rng() * 80;
-            lv.movers.push({ x0: x, x: x, y: y - 50, w: 90, h: 18, range: gap, dir: 1, sp: 1 + rng() * 1.2, axis: rng() < 0.5 ? 'x' : 'y', phase: rng() * 6 });
+        } else if (type === 5) {
+            const gap = 100 + rng() * 80;
+            lv.movers.push({ x0: x, x: x, y: y - 50, w: 80, h: 18, range: gap, dir: 1, sp: 1 + rng() * 1.2, axis: rng() < 0.5 ? 'x' : 'y', phase: rng() * 6 });
             x += gap;
-            const pw = 140 + rng() * 80;
+            const pw = 120 + rng() * 80;
             lv.platforms.push({ x: x, y: y, w: pw, h: 200, ground: true });
             x += pw;
-        } else if (r < 0.70 && n > 7) {
-            const pw = 200 + rng() * 80;
+        } else if (type === 6) {
+            const pw = 160 + rng() * 80;
             lv.platforms.push({ x: x, y: y, w: pw, h: 200, ground: true });
             lv.saws.push({ x: x + pw * 0.5, y: y - 24, r: 24, a: 0, sp: 0.12, bx: x + pw * 0.5, range: pw * 0.35, move: rng() < 0.5, ph: rng() * 6 });
             x += pw;
-        } else if (r < 0.80 && n > 4) {
-            const pw = 200 + rng() * 80;
-            lv.platforms.push({ x: x, y: y, w: pw, h: 200, ground: true });
-            lv.hazards.push({ x: x + pw * 0.4, y: y - 70, w: 30, h: 70, type: 'low' });
-            x += pw;
         } else {
-            const pw = 180 + rng() * 140;
+            const pw = 120 + rng() * 120;
             lv.platforms.push({ x: x, y: y, w: pw, h: 200, ground: true });
             if (rng() < 0.5) lv.coins.push({ x: x + pw * 0.5, y: y - 40, got: false });
             x += pw;
         }
-        if (rng() < 0.25 && n > 9) {
-            lv.platforms.push({ x: x, y: y - 60, w: 70, h: 18 });
-            lv.coins.push({ x: x + 35, y: y - 100, got: false });
+        if (rng() < 0.2 && n > 5) {
+            lv.platforms.push({ x: x, y: y - 60 - rng() * 40, w: 60, h: 18 });
+            lv.coins.push({ x: x + 30, y: y - 100 - rng() * 40, got: false });
+        }
+        if (rng() < 0.15 && n > 8) {
+            lv.enemies.push({ x: x + 20, y: y - 80 - rng() * 30, w: 24, h: 30, vx: 0.5 + rng() * 0.5, dir: 1, alive: true });
         }
     }
     lv.platforms.push({ x: x, y: y, w: 220, h: 200, ground: true });
@@ -80,6 +109,9 @@ function makelevel(n) {
 }
 
 function themefor(n) {
+    if (n >= 21 && n <= 25) {
+        return { sky: '#0a0005', ground: '#1a0a0a', accent: '#4a0a0a', fog: '#0a0202' };
+    }
     const themes = [
         { sky: '#1a1228', ground: '#2a2236', accent: '#5a3f80', fog: '#15101e' },
         { sky: '#101824', ground: '#1c2832', accent: '#3a6f80', fog: '#0c141c' },
@@ -113,4 +145,4 @@ function makeboss(n) {
         jumpt: 0,
         hover: 0
     };
-         }
+}
