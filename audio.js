@@ -44,7 +44,6 @@ function footstepsfx() {
     if (!settings.sound) return;
     const a = getaudioctx();
     if (!a) return;
-
     const osc = a.createOscillator();
     const gain = a.createGain();
     osc.type = 'sine';
@@ -80,4 +79,38 @@ function footstepsfx() {
     gain.connect(delay);
     gain2.connect(delay);
     delay.connect(a.destination);
+}
+
+function scarydrone() {
+    if (!settings.sound) return;
+    const a = getaudioctx();
+    if (!a) return;
+    const o = a.createOscillator();
+    const g = a.createGain();
+    o.type = 'sawtooth';
+    o.frequency.setValueAtTime(50, a.currentTime);
+    o.frequency.exponentialRampToValueAtTime(30, a.currentTime + 10);
+    g.gain.setValueAtTime(0.08, a.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.02, a.currentTime + 10);
+    o.connect(g);
+    g.connect(a.destination);
+    o.start();
+    o.stop(a.currentTime + 10);
+}
+
+function scaryscreech() {
+    if (!settings.sound) return;
+    const a = getaudioctx();
+    if (!a) return;
+    const o = a.createOscillator();
+    const g = a.createGain();
+    o.type = 'square';
+    o.frequency.setValueAtTime(1500, a.currentTime);
+    o.frequency.exponentialRampToValueAtTime(200, a.currentTime + 0.3);
+    g.gain.setValueAtTime(0.2, a.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, a.currentTime + 0.3);
+    o.connect(g);
+    g.connect(a.destination);
+    o.start();
+    o.stop(a.currentTime + 0.3);
 }
