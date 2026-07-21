@@ -160,13 +160,11 @@ function doslide() {
     player.slidetime = 400;
     player.slidecd = 15000;
     player.crouch = false;
-    
     if (player.onground) {
         let newh = player.h * 0.45;
         player.y += (player.h - newh);
         snap_to_ground();
     }
-    
     player.vx = 7 * player.facing;
     beep(300, 0.2, 'sawtooth', 0.12);
     burst(player.x, player.y + player.h, '#aaa', 8);
