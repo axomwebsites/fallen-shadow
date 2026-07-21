@@ -15,7 +15,6 @@ function startstory() {
     canvas.width = canvas.parentElement.clientWidth;
     canvas.height = canvas.parentElement.clientHeight;
     let t = 0;
-    const text_el = document.getElementById('storytext');
     const skip_btn = document.getElementById('storyskipbtn');
 
     function drawstory() {
@@ -25,8 +24,8 @@ function startstory() {
         ctx_story.fillStyle = '#0a0810';
         ctx_story.fillRect(0, 0, w, h);
 
-        const cx = w / 2;
-        const cy = h / 2 + 40;
+        const cx = w/2;
+        const cy = h/2 + 40;
         ctx_story.fillStyle = '#3a2a20';
         ctx_story.fillRect(cx - 120, cy + 40, 240, 16);
         ctx_story.fillRect(cx - 100, cy + 56, 16, 50);
@@ -39,10 +38,10 @@ function startstory() {
         if (kidnap) wifex = cx + 70 + shadowprog * (w * 0.6);
         if (shadowprog < 1) drawnightchar(ctx_story, wifex, cy + 40 - shadowprog * 120, -1, '#e8b0c8');
 
-        const fl = Math.sin(t / 120) * 3;
-        ctx_story.fillStyle = 'rgba(255,180,80,' + (0.3 + Math.sin(t / 100) * 0.1) + ')';
+        const fl = Math.sin(t/120) * 3;
+        ctx_story.fillStyle = 'rgba(255,180,80,'+(0.3+Math.sin(t/100)*0.1)+')';
         ctx_story.beginPath();
-        ctx_story.arc(cx, cy + 30, 18 + fl, 0, 7);
+        ctx_story.arc(cx, cy + 30, 18+fl, 0, 7);
         ctx_story.fill();
         ctx_story.fillStyle = '#ffd060';
         ctx_story.beginPath();
@@ -50,16 +49,16 @@ function startstory() {
         ctx_story.fill();
 
         if (t > 2000) {
-            const sp = Math.min(1, (t - 2000) / 1500);
-            const shx = w - (1 - sp) * (w - (cx + 70));
+            const sp = Math.min(1, (t-2000)/1500);
+            const shx = w - (1-sp)*(w-(cx+70));
             ctx_story.fillStyle = 'rgba(0,0,0,0.7)';
             ctx_story.beginPath();
-            ctx_story.arc(shx, cy - 20, 40 + sp * 30, 0, 7);
+            ctx_story.arc(shx, cy - 20, 40 + sp*30, 0, 7);
             ctx_story.fill();
             ctx_story.strokeStyle = 'rgba(120,40,160,0.6)';
             ctx_story.lineWidth = 3;
             ctx_story.beginPath();
-            ctx_story.arc(shx, cy - 20, 46 + sp * 30, 0, 7);
+            ctx_story.arc(shx, cy - 20, 46 + sp*30, 0, 7);
             ctx_story.stroke();
         }
 
@@ -71,11 +70,11 @@ function startstory() {
         ctx_story.fillStyle = '#cfc8d8';
         ctx_story.textAlign = 'center';
         ctx_story.font = '20px Georgia';
-        ctx_story.fillText(msg, cx, h - 80);
+        ctx_story.fillText(msg, cx, h-80);
         if (t > 7000) {
             ctx_story.font = '14px Georgia';
             ctx_story.fillStyle = '#7a6f90';
-            ctx_story.fillText('(click/tap)', cx, h - 50);
+            ctx_story.fillText('(click/tap)', cx, h-50);
         }
     }
 
@@ -146,4 +145,4 @@ function drawnightchargeneral(ctx, x, y, facing, color) {
     ctx.ellipse(2, -40, 7, 9, 0, 0, 7);
     ctx.fill();
     ctx.restore();
-                                          }
+}
