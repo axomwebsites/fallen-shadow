@@ -12,7 +12,7 @@ h1.title { font-size:clamp(28px,8vw,64px); letter-spacing:4px; color:#e6e0f0; te
 .btn { background:linear-gradient(180deg,#2a2438,#171220); color:#d8d0e8; border:1px solid #4a3f60; padding:14px 38px; font-size:18px; letter-spacing:2px; border-radius:6px; cursor:pointer; margin:8px; font-family:inherit; transition:.15s; min-width:200px; }
 .btn:hover { background:linear-gradient(180deg,#3a3050,#221830); transform:translateY(-2px); box-shadow:0 4px 18px rgba(100,60,160,0.4); }
 .btn:active { transform:translateY(0); }
-.smallbtn { min-width:auto; padding:8px 16px; font-size:20px; }
+.smallbtn { min-width:auto; padding:8px 16px; font-size:14px; }
 
 #levelselect { overflow-y:auto; }
 .levelgrid { display:grid; grid-template-columns:repeat(6,1fr); gap:10px; max-width:520px; width:100%; margin-top:20px; }
@@ -71,4 +71,7 @@ h1.title { font-size:clamp(28px,8vw,64px); letter-spacing:4px; color:#e6e0f0; te
 .editmode #touchcontrols .tbtn { outline:2px dashed #6af; outline-offset:2px; }
 .editmode #joystickbase { outline:2px dashed #6af; outline-offset:2px; }
 
-.horror-overlay { position:fixed; inset:0; pointer-events:none; z-index:5; border:4px solid rgba(80,0,0,0.3); box-shadow:inset 0 0 100px rgba(100,0,0,0.15); }
+#skineditor, #leveleditor { z-index:20; }
+#skineditor input { background:#222; color:#fff; border:1px solid #555; padding:6px; border-radius:4px; }
+#skineditor label { color:#aaa; font-size:14px; margin-right:6px; }
+#editorcanvas { touch-action:none; }
