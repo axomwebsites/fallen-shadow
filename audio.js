@@ -44,30 +44,40 @@ function footstepsfx() {
     if (!settings.sound) return;
     const a = getaudioctx();
     if (!a) return;
-    const buffersize = a.sampleRate * 0.08;
+
+    const osc = a.createOscillator();
+    const gain = a.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(200, a.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(80, a.currentTime + 0.05);
+    gain.gain.setValueAtTime(0.15, a.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, a.currentTime + 0.05);
+    osc.connect(gain);
+    gain.connect(a.destination);
+    osc.start();
+    osc.stop(a.currentTime + 0.05);
+
+    const buffersize = a.sampleRate * 0.03;
     const buffer = a.createBuffer(1, buffersize, a.sampleRate);
     const data = buffer.getChannelData(0);
     for (let i = 0; i < buffersize; i++) {
-        data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (buffersize * 0.4));
+        data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (buffersize * 0.3));
     }
     const source = a.createBufferSource();
     source.buffer = buffer;
-
-    const gain = a.createGain();
-    gain.gain.value = 0.12;
+    const gain2 = a.createGain();
+    gain2.gain.value = 0.06;
+    source.connect(gain2);
+    gain2.connect(a.destination);
+    source.start();
 
     const delay = a.createDelay(0.5);
-    delay.delayTime.value = 0.2;
+    delay.delayTime.value = 0.15;
     const feedback = a.createGain();
-    feedback.gain.value = 0.25;
-
+    feedback.gain.value = 0.15;
     delay.connect(feedback);
     feedback.connect(delay);
-    delay.connect(a.destination);
-
-    source.connect(gain);
     gain.connect(delay);
-    gain.connect(a.destination);
-
-    source.start();
+    gain2.connect(delay);
+    delay.connect(a.destination);
 }
