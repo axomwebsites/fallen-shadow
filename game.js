@@ -39,6 +39,7 @@ let graintimer = 0;
 let horrorenabled = false;
 let endphase = 0;
 let endtextshown = false;
+let endtextdisplayed = false;
 
 const savedskin = localStorage.getItem('playerskin');
 if (savedskin) {
@@ -116,11 +117,15 @@ function startendsequence() {
     wifefally = 0;
     endphase = 0;
     endtextshown = false;
+    endtextdisplayed = false;
     state = stateend;
     document.getElementById('hud').classList.add('hidden');
     document.getElementById('touchcontrols').classList.add('hidden');
     document.getElementById('joystickwrap').classList.add('hidden');
     document.getElementById('bossbarwrap').classList.add('hidden');
+    document.getElementById('fadeblack').classList.remove('on');
+    document.getElementById('endscreen').classList.add('hidden');
+    document.getElementById('endtext').classList.remove('show');
     camtargetzoom = 1.3;
     shake = 0;
 }
@@ -182,8 +187,8 @@ function updateend(dt) {
             document.getElementById('fadeblack').classList.add('on');
         }
     } else if (endphase === 3) {
-        if (endtimer > 2200 && !endtextshown) {
-            endtextshown = true;
+        if (endtimer > 2200 && !endtextdisplayed) {
+            endtextdisplayed = true;
             showendtext();
         }
     }
