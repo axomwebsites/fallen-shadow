@@ -140,17 +140,17 @@ function themefor(n) {
 }
 
 function makeboss(n) {
-    const type = n === 10 ? 'land' : n === 20 ? 'float' : 'shadow';
+    let type = n === 10 ? 'land' : n === 20 ? 'vereus' : 'shadow';
     return {
         type, n,
         x: 1200,
-        y: type === 'float' ? 180 : 330,
-        w: 80,
-        h: type === 'shadow' ? 120 : 80,
+        y: type === 'vereus' ? 180 : (type === 'float' ? 180 : 330),
+        w: type === 'vereus' ? 80 : (type === 'shadow' ? 120 : 80),
+        h: type === 'vereus' ? 100 : (type === 'shadow' ? 120 : 80),
         maxhp: 100,
         hp: 100,
         phase: 0,
-        phasenames: ['normal', 'fast', 'baited', 'angry'],
+        phasenames: ['normal', 'fast', 'angry', 'enraged'],
         t: 0,
         attackt: 0,
         dead: false,
@@ -163,6 +163,10 @@ function makeboss(n) {
         jumpt: 0,
         hover: 0,
         greenballs: [],
-        balltimer: 0
+        balltimer: 0,
+        charging: false,
+        chargecooldown: 0,
+        chargevx: 0,
+        chargevy: 0
     };
-}V
+}
