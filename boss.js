@@ -13,9 +13,6 @@ function updateboss(dt) {
         shake = 10;
         b.attackt = 0;
         document.getElementById('bossphase').textContent = b.phasenames[ph];
-        if (b.type === 'vereus' && ph === 2) {
-            b.chargecooldown = 0;
-        }
     }
     document.getElementById('bossfill').style.width = (b.hp / b.maxhp * 100) + '%';
 
@@ -277,36 +274,55 @@ function drawboss(camx, camy) {
     ctx.save();
 
     if (b.type === 'land') {
-        ctx.fillStyle = b.baited ? '#a44' : '#822';
-        ctx.fillRect(sx, sy, b.w, b.h);
-        ctx.fillStyle = b.baited ? '#d88' : '#966';
-        ctx.fillRect(sx + 4, sy + 4, b.w - 8, 10);
-        ctx.fillStyle = '#ff0';
-        ctx.shadowColor = '#ff0';
+        const isangry = b.phase >= 2;
+        ctx.shadowColor = '#800';
+        ctx.shadowBlur = 20;
+
+        ctx.fillStyle = isangry ? '#4a1a1a' : '#6a2a2a';
+        ctx.beginPath();
+        ctx.ellipse(sx + b.w/2, sy + b.h/2, b.w/2, b.h/2, 0, 0, 7);
+        ctx.fill();
+
+        ctx.fillStyle = isangry ? '#2a0a0a' : '#4a1a1a';
+        ctx.fillRect(sx + 10, sy + b.h - 20, b.w - 20, 15);
+
+        ctx.fillStyle = isangry ? '#8a3a3a' : '#aa5a5a';
+        ctx.fillRect(sx + 14, sy + b.h - 24, 8, 10);
+        ctx.fillRect(sx + b.w - 22, sy + b.h - 24, 8, 10);
+
+        ctx.fillStyle = isangry ? '#aaa' : '#ddd';
         ctx.shadowBlur = 10;
         ctx.beginPath();
-        ctx.arc(sx + 20, sy + 28, 7, 0, 7);
-        ctx.arc(sx + 60, sy + 28, 7, 0, 7);
+        ctx.arc(sx + 24, sy + 26, 8, 0, 7);
+        ctx.arc(sx + b.w - 24, sy + 26, 8, 0, 7);
         ctx.fill();
         ctx.shadowBlur = 0;
         ctx.fillStyle = '#a00';
         ctx.beginPath();
-        ctx.arc(sx + 20, sy + 28, 3, 0, 7);
-        ctx.arc(sx + 60, sy + 28, 3, 0, 7);
+        ctx.arc(sx + 24, sy + 26, 4, 0, 7);
+        ctx.arc(sx + b.w - 24, sy + 26, 4, 0, 7);
         ctx.fill();
-        ctx.fillStyle = '#600';
-        ctx.beginPath();
-        ctx.arc(sx + 20, sy + 42, 4, 0, 7);
-        ctx.arc(sx + 60, sy + 42, 4, 0, 7);
-        ctx.fill();
+
+        ctx.fillStyle = isangry ? '#f00' : '#a44';
+        ctx.fillRect(sx + 30, sy + 42, 20, 6);
+        for (let i = 0; i < 6; i++) {
+            ctx.fillRect(sx + 26 + i*6, sy + 48, 4, 8);
+        }
+
         for (let i = 0; i < 5; i++) {
-            ctx.fillStyle = '#a33';
+            ctx.fillStyle = isangry ? '#6a2a2a' : '#8a4a4a';
             ctx.beginPath();
-            ctx.moveTo(sx + i*16 + 4, sy + b.h - 16);
-            ctx.lineTo(sx + i*16 + 12, sy + b.h - 4);
-            ctx.lineTo(sx + i*16 + 20, sy + b.h - 16);
+            ctx.moveTo(sx + i*16 + 6, sy + b.h - 24);
+            ctx.lineTo(sx + i*16 + 12, sy + b.h - 36);
+            ctx.lineTo(sx + i*16 + 18, sy + b.h - 24);
             ctx.fill();
         }
+
+        ctx.fillStyle = isangry ? '#4a0a0a' : '#3a1a1a';
+        ctx.fillRect(sx + 4, sy + 8, 6, 20);
+        ctx.fillRect(sx + b.w - 10, sy + 8, 6, 20);
+
+        ctx.shadowBlur = 0;
     } else if (b.type === 'vereus') {
         const isangry = b.phase === 2;
         const scale = b.phase === 0 ? 1 : (b.phase === 1 ? 1.2 : 1.5);
@@ -431,6 +447,94 @@ function drawboss(camx, camy) {
             ctx.restore();
         }
 
+    } else if (b.type === 'shadow') {
+        const isangry = b.phase >= 2;
+        const cx = sx + b.w/2;
+        const cy = sy + b.h/2;
+
+        ctx.shadowColor = isangry ? '#f0f' : '#50f';
+        ctx.shadowBlur = 30;
+
+        ctx.fillStyle = isangry ? '#1a0a1a' : '#0a0510';
+        ctx.beginPath();
+        ctx.arc(cx, cy, b.w*0.6, 0, 7);
+        ctx.fill();
+
+        for (let i = 0; i < 12; i++) {
+            const angle = i/12 * Math.PI * 2 + b.t/200;
+            const len = b.w*0.5 + Math.sin(b.t/300 + i)*10;
+            ctx.fillStyle = isangry ? 'rgba(100,0,100,0.3)' : 'rgba(50,0,80,0.3)';
+            ctx.beginPath();
+            ctx.moveTo(cx, cy);
+            ctx.lineTo(cx + Math.cos(angle)*len, cy + Math.sin(angle)*len);
+            ctx.lineTo(cx + Math.cos(angle+0.3)*len*0.7, cy + Math.sin(angle+0.3)*len*0.7);
+            ctx.fill();
+        }
+
+        ctx.shadowBlur = 0;
+        ctx.shadowColor = isangry ? '#f0f' : '#a0f';
+        ctx.shadowBlur = 20;
+
+        ctx.fillStyle = isangry ? '#f44' : '#f0f';
+        ctx.beginPath();
+        ctx.arc(cx - 20, cy - 10, 8, 0, 7);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(cx + 20, cy - 10, 8, 0, 7);
+        ctx.fill();
+
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = '#000';
+        ctx.beginPath();
+        ctx.arc(cx - 20, cy - 10, 3, 0, 7);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(cx + 20, cy - 10, 3, 0, 7);
+        ctx.fill();
+
+        if (isangry) {
+            ctx.fillStyle = '#f0f';
+            ctx.shadowBlur = 30;
+            ctx.beginPath();
+            ctx.arc(cx, cy + 10, 10, 0, 7);
+            ctx.fill();
+            ctx.shadowBlur = 0;
+            ctx.fillStyle = '#000';
+            ctx.beginPath();
+            ctx.arc(cx, cy + 10, 4, 0, 7);
+            ctx.fill();
+            ctx.fillStyle = '#f0f';
+            ctx.fillRect(cx - 16, cy + 22, 32, 4);
+            for (let i = 0; i < 6; i++) {
+                ctx.fillRect(cx - 14 + i*6, cy + 26, 4, 8);
+            }
+        } else {
+            ctx.fillStyle = '#a0f';
+            ctx.fillRect(cx - 12, cy + 14, 24, 3);
+        }
+
+        ctx.shadowBlur = 0;
+
+        ctx.fillStyle = isangry ? 'rgba(200,0,200,0.2)' : 'rgba(100,0,100,0.2)';
+        for (let i = 0; i < 6; i++) {
+            const a = i/6 * Math.PI * 2 + b.t/500;
+            const r = b.w*0.4 + Math.sin(b.t/400 + i)*8;
+            ctx.beginPath();
+            ctx.arc(cx + Math.cos(a)*r, cy + Math.sin(a)*r, 10, 0, 7);
+            ctx.fill();
+        }
+
+        ctx.shadowColor = '#f0f';
+        ctx.shadowBlur = 10;
+        ctx.fillStyle = isangry ? '#f0f' : '#80f';
+        ctx.beginPath();
+        ctx.arc(cx - 30, cy - 25, 5, 0, 7);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(cx + 30, cy - 25, 5, 0, 7);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+
     } else {
         const op = b.baited ? 0.7 : 0.92;
         ctx.fillStyle = 'rgba(5,2,10,'+op+')';
@@ -514,18 +618,16 @@ function drawboss(camx, camy) {
         ctx.shadowBlur = 0;
     }
 
-    if (b.type !== 'vereus') {
-        for (const pr of b.projectiles) {
-            if (pr.ray) continue;
-            const px = pr.x - camx;
-            const py = pr.y - camy;
-            ctx.fillStyle = pr.green ? '#0f0' : (pr.dark ? '#a0f' : pr.gx ? '#f80' : '#48f');
-            ctx.shadowColor = ctx.fillStyle;
-            ctx.shadowBlur = 12;
-            ctx.beginPath();
-            ctx.arc(px, py, pr.r, 0, 7);
-            ctx.fill();
-            ctx.shadowBlur = 0;
-        }
+    for (const pr of b.projectiles) {
+        if (pr.ray) continue;
+        const px = pr.x - camx;
+        const py = pr.y - camy;
+        ctx.fillStyle = pr.green ? '#0f0' : (pr.dark ? '#a0f' : pr.gx ? '#f80' : '#48f');
+        ctx.shadowColor = ctx.fillStyle;
+        ctx.shadowBlur = 12;
+        ctx.beginPath();
+        ctx.arc(px, py, pr.r, 0, 7);
+        ctx.fill();
+        ctx.shadowBlur = 0;
     }
 }
