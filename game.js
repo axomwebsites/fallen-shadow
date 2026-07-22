@@ -38,6 +38,7 @@ let settingsfrompause = false;
 let graintimer = 0;
 let horrorenabled = false;
 let endphase = 0;
+let endtextshown = false;
 
 const savedskin = localStorage.getItem('playerskin');
 if (savedskin) {
@@ -114,21 +115,24 @@ function startendsequence() {
     wifefell = false;
     wifefally = 0;
     endphase = 0;
+    endtextshown = false;
     state = stateend;
     document.getElementById('hud').classList.add('hidden');
     document.getElementById('touchcontrols').classList.add('hidden');
     document.getElementById('joystickwrap').classList.add('hidden');
     document.getElementById('bossbarwrap').classList.add('hidden');
     camtargetzoom = 1.3;
+    shake = 0;
 }
 
 function updateend(dt) {
     endtimer += dt;
     const groundy = 380;
+
     if (endphase === 0) {
         if (endseq === 1) {
             cagey += 8;
-            if (cagey >= groundy - 90) { cagey = groundy - 90; endseq = 2; endtimer = 0; beep(150, 0.4, 'sawtooth', 0.2); shake = 10; }
+            if (cagey >= groundy - 90) { cagey = groundy - 90; endseq = 2; endtimer = 0; }
         } else if (endseq === 2) {
             if (endtimer < 400) {
                 if (Math.random() < 0.3) burst(wifex, groundy - 50, '#888', 3);
@@ -141,9 +145,14 @@ function updateend(dt) {
             heartt += dt;
             if (heartt > 1800) { endseq = 5; endtimer = 0; }
         } else if (endseq === 5) {
-            if (!wifefell) { wifefell = true; shake = 14; beep(100, 0.5, 'sawtooth', 0.2); burst(wifex, groundy, '#444', 20); }
+            if (!wifefell) {
+                wifefell = true;
+                shake = 14;
+                beep(100, 0.5, 'sawtooth', 0.2);
+                burst(wifex, groundy, '#444', 20);
+            }
             wifefally += dt * 0.5;
-            const targetCamY = wifefally * 0.5;
+            let targetCamY = wifefally * 0.4;
             camy += (targetCamY - camy) * 0.05;
             if (endtimer > 1500) {
                 endseq = 6;
@@ -152,10 +161,11 @@ function updateend(dt) {
                 camtargetzoom = 2.2;
                 camx = player.x - (W / camtargetzoom) * 0.4;
                 camy = 0;
+                shake = 0;
             }
         }
     } else if (endphase === 1) {
-        const targetCamX = player.x - (W / camtargetzoom) * 0.4;
+        let targetCamX = player.x - (W / camtargetzoom) * 0.4;
         camx += (targetCamX - camx) * 0.04;
         camzoom += (camtargetzoom - camzoom) * 0.03;
         if (endtimer > 2000) {
@@ -172,9 +182,9 @@ function updateend(dt) {
             document.getElementById('fadeblack').classList.add('on');
         }
     } else if (endphase === 3) {
-        if (endtimer > 2200) {
+        if (endtimer > 2200 && !endtextshown) {
+            endtextshown = true;
             showendtext();
-            endphase = 4;
         }
     }
 }
