@@ -39,8 +39,8 @@ function updateboss(dt) {
         b.baited = (b.phase === 2 && Math.sin(b.t/600) > 0.6);
         if (b.attackt > 1400) {
             b.attackt = 0;
-            b.projectiles.push({ x: b.x, y: groundy - 12, vx: -5, r: 10, gx: true });
-            b.projectiles.push({ x: b.x + b.w, y: groundy - 12, vx: 5, r: 10, gx: true });
+            b.projectiles.push({ x: b.x, y: groundy - 12, vx: -5, vy: 0, r: 10, gx: true });
+            b.projectiles.push({ x: b.x + b.w, y: groundy - 12, vx: 5, vy: 0, r: 10, gx: true });
         }
     } else if (b.type === 'float') {
         b.hover += dt;
@@ -86,7 +86,7 @@ function updateboss(dt) {
 
     if (b.balltimer > 3000 && !b.dead) {
         b.balltimer = 0;
-        const ball = { x: b.x + b.w/2, y: b.y + b.h + 10, vy: 1.5, r: 12, life: 120 };
+        const ball = { x: b.x + b.w/2, y: b.y + b.h + 10, vy: 1.5, r: 12, life: 180, onground: false };
         b.greenballs.push(ball);
         beep(300, 0.1, 'sine', 0.1);
     }
@@ -95,18 +95,28 @@ function updateboss(dt) {
         const ball = b.greenballs[i];
         ball.y += ball.vy;
         ball.life -= 1;
+        if (ball.y >= groundy - 5) {
+            ball.y = groundy - 5;
+            ball.onground = true;
+        }
         if (ball.y > groundy + 50 || ball.life <= 0) {
             b.greenballs.splice(i, 1);
             continue;
         }
         const dx = (p.x + p.w/2) - ball.x;
         const dy = (p.y + p.h/2) - ball.y;
-        if (dx*dx + dy*dy < (ball.r + 16)*(ball.r + 16)) {
-            b.greenballs.splice(i, 1);
-            const ang = Math.atan2((b.y + b.h/2) - (p.y + p.h/2), (b.x + b.w/2) - (p.x + p.w/2));
-            const sp = 12;
-            b.projectiles.push({ x: p.x + p.w/2, y: p.y + p.h/2, vx: Math.cos(ang)*sp, vy: Math.sin(ang)*sp, r: 12, green: true });
-            beep(600, 0.15, 'square', 0.15);
+        const dist = dx*dx + dy*dy;
+        if (dist < (ball.r + 16)*(ball.r + 16)) {
+            if (ball.onground) {
+                b.greenballs.splice(i, 1);
+                const ang = Math.atan2((b.y + b.h/2) - (p.y + p.h/2), (b.x + b.w/2) - (p.x + p.w/2));
+                const sp = 12;
+                b.projectiles.push({ x: p.x + p.w/2, y: p.y + p.h/2, vx: Math.cos(ang)*sp, vy: Math.sin(ang)*sp, r: 12, green: true });
+                beep(600, 0.15, 'square', 0.15);
+            } else {
+                playerdie();
+                return;
+            }
         }
     }
 
@@ -140,8 +150,23 @@ function updateboss(dt) {
     for (let i = b.projectiles.length - 1; i >= 0; i--) {
         const pr = b.projectiles[i];
         if (pr.green) continue;
+        pr.vy = (pr.vy || 0) + 0.3;
         pr.x += pr.vx;
-        if (pr.vy) pr.y += pr.vy;
+        pr.y += pr.vy;
+        if (pr.y >= groundy - pr.r) {
+            pr.y = groundy - pr.r;
+            pr.vy = 0;
+            pr.vx = 0;
+            pr.onground = true;
+            if (!pr.life) pr.life = 180; 
+        }
+        if (pr.life !== undefined) {
+            pr.life -= 1;
+            if (pr.life <= 0) {
+                b.projectiles.splice(i, 1);
+                continue;
+            }
+        }
         if (pr.x < camx - 100 || pr.x > camx + W + 100 || pr.y > H + 100) {
             b.projectiles.splice(i, 1);
             continue;
@@ -244,7 +269,7 @@ function drawboss(camx, camy) {
         const py = ball.y - camy;
         ctx.shadowColor = '#0f0';
         ctx.shadowBlur = 30;
-        ctx.fillStyle = '#0f0';
+        ctx.fillStyle = ball.onground ? '#afa' : '#0f0';
         ctx.beginPath();
         ctx.arc(px, py, ball.r, 0, 7);
         ctx.fill();
