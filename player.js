@@ -47,31 +47,58 @@ function drawplayer(camx, camy) {
 
     ctx.fillStyle = p.morphed ? '#4a0a0a' : sk.color;
     ctx.beginPath();
-    ctx.moveTo(-11, -8 + bob);
-    ctx.lineTo(-9, -hh * 0.7);
+    ctx.moveTo(-14, -6 + bob);
+    ctx.lineTo(-12, -hh * 0.5);
+    ctx.lineTo(-10, -hh * 0.75);
     ctx.lineTo(-7, -hh);
-    ctx.quadraticCurveTo(0, -hh - 8, 7, -hh);
-    ctx.lineTo(9, -hh * 0.7);
-    ctx.lineTo(11, -8 + bob);
-    ctx.quadraticCurveTo(0, -4, -11, -8 + bob);
+    ctx.quadraticCurveTo(0, -hh - 12, 7, -hh);
+    ctx.lineTo(10, -hh * 0.75);
+    ctx.lineTo(12, -hh * 0.5);
+    ctx.lineTo(14, -6 + bob);
+    ctx.quadraticCurveTo(0, -2, -14, -6 + bob);
     ctx.closePath();
     ctx.fill();
 
-    ctx.fillStyle = 'rgba(0,0,0,0.12)';
-    ctx.fillRect(0, -hh * 0.7, 11, hh * 0.62);
+    ctx.fillStyle = 'rgba(0,0,0,0.2)';
+    ctx.fillRect(-10, -hh * 0.6, 20, hh * 0.4);
 
     ctx.fillStyle = p.morphed ? '#ff2200' : sk.hood;
     ctx.beginPath();
-    ctx.ellipse(2, -hh + 6, 6, 8, 0, 0, 7);
+    ctx.ellipse(2, -hh + 8, 8, 10, 0, 0, 7);
+    ctx.fill();
+
+    ctx.fillStyle = p.morphed ? '#ff4400' : '#e0e0ff';
+    ctx.shadowColor = '#8af';
+    ctx.shadowBlur = 10;
+    ctx.beginPath();
+    ctx.arc(-3, -hh + 5, 2.5, 0, 7);
+    ctx.arc(7, -hh + 5, 2.5, 0, 7);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+
+    ctx.fillStyle = '#100c16';
+    ctx.beginPath();
+    ctx.arc(-3, -hh + 5, 1.2, 0, 7);
+    ctx.arc(7, -hh + 5, 1.2, 0, 7);
     ctx.fill();
 
     ctx.fillStyle = '#cbc4aa';
-    ctx.fillRect(5, -hh * 0.65, 5, hh * 0.4);
+    ctx.fillRect(5, -hh * 0.55, 5, hh * 0.35);
+    ctx.fillRect(-10, -hh * 0.55, 5, hh * 0.35);
+
+    ctx.fillStyle = '#8a7a6a';
+    ctx.fillRect(9, -hh * 0.4, 8, 3);
+    ctx.fillRect(-17, -hh * 0.4, 8, 3);
 
     if (p.weapon) {
-        ctx.fillStyle = '#888';
-        ctx.fillRect(14, -hh * 0.5, 10, 4);
-        ctx.fillRect(20, -hh * 0.6, 4, 10);
+        ctx.fillStyle = '#aaa';
+        ctx.shadowColor = '#ff0';
+        ctx.shadowBlur = 12;
+        ctx.fillRect(14, -hh * 0.5, 14, 4);
+        ctx.fillRect(24, -hh * 0.65, 4, 12);
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = '#666';
+        ctx.fillRect(26, -hh * 0.6, 2, 8);
     }
 
     ctx.restore();
