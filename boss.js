@@ -13,6 +13,9 @@ function updateboss(dt) {
         shake = 10;
         b.attackt = 0;
         document.getElementById('bossphase').textContent = b.phasenames[ph];
+        if (b.type === 'vereus' && ph === 2) {
+            b.chargecooldown = 0;
+        }
     }
     document.getElementById('bossfill').style.width = (b.hp / b.maxhp * 100) + '%';
 
@@ -39,8 +42,7 @@ function updateboss(dt) {
         b.baited = (b.phase === 2 && Math.sin(b.t/600) > 0.6);
         if (b.attackt > 1400) {
             b.attackt = 0;
-            b.projectiles.push({ x: b.x, y: groundy - 12, vx: -5, vy: 0, r: 10, gx: true });
-            b.projectiles.push({ x: b.x + b.w, y: groundy - 12, vx: 5, vy: 0, r: 10, gx: true });
+            b.projectiles.push({ x: b.x + b.w/2, y: groundy - 12, vx: (p.x > b.x ? 1 : -1) * 5, vy: 0, r: 10, gx: true });
         }
     } else if (b.type === 'vereus') {
         b.hover += dt;
@@ -64,8 +66,6 @@ function updateboss(dt) {
                 const ang = Math.atan2((p.y + 20) - (b.y + b.h/2), (p.x) - (b.x + b.w/2));
                 const sp = 6.5;
                 b.projectiles.push({ x: b.x + b.w/2, y: b.y + b.h/2, vx: Math.cos(ang)*sp, vy: Math.sin(ang)*sp, r: 8, ray: true });
-                b.projectiles.push({ x: b.x + b.w/2, y: b.y + b.h/2, vx: Math.cos(ang+0.3)*sp*0.8, vy: Math.sin(ang+0.3)*sp*0.8, r: 6, ray: true });
-                b.projectiles.push({ x: b.x + b.w/2, y: b.y + b.h/2, vx: Math.cos(ang-0.3)*sp*0.8, vy: Math.sin(ang-0.3)*sp*0.8, r: 6, ray: true });
             }
         } else if (b.phase === 2) {
             if (!b.charging) {
@@ -85,7 +85,7 @@ function updateboss(dt) {
                     b.y = groundy - b.h;
                     b.chargevy = 0;
                     shake = 14;
-                    burst(b.x + b.w/2, b.y + b.h, '#f44', 20);
+                    burst(b.x + b.w/2, b.y + b.h, '#222', 20);
                     b.charging = false;
                     b.chargecooldown = 1200;
                 }
@@ -123,17 +123,9 @@ function updateboss(dt) {
         if (b.telegraph > 0) {
             b.telegraph -= dt;
             if (b.telegraph <= 0) {
-                if (b.type === 'shadow') {
-                    const ang = Math.atan2((p.y + 20) - (b.y + b.h/2 - 30), (p.x) - (b.x + b.w/2));
-                    const sp = 2 + b.phase;
-                    b.projectiles.push({ x: b.x + b.w/2, y: b.y + b.h/2 - 30, vx: Math.cos(ang)*sp, vy: Math.sin(ang)*sp, r: 12, dark: true });
-                } else {
-                    const n = 6 + b.phase * 2;
-                    for (let i = 0; i < n; i++) {
-                        const a = i/n * Math.PI * 2;
-                        b.projectiles.push({ x: b.x + b.w/2, y: b.y + b.h/2, vx: Math.cos(a)*(3+b.phase), vy: Math.sin(a)*(3+b.phase), r: 8, dark: true });
-                    }
-                }
+                const ang = Math.atan2((p.y + 20) - (b.y + b.h/2 - 30), (p.x) - (b.x + b.w/2));
+                const sp = 2 + b.phase;
+                b.projectiles.push({ x: b.x + b.w/2, y: b.y + b.h/2 - 30, vx: Math.cos(ang)*sp, vy: Math.sin(ang)*sp, r: 12, dark: true });
             }
         }
         b.y = 160 + Math.sin(b.hover/400) * 30;
@@ -275,52 +267,63 @@ function drawboss(camx, camy) {
 
     if (b.type === 'land') {
         const isangry = b.phase >= 2;
-        ctx.shadowColor = '#800';
-        ctx.shadowBlur = 20;
+        ctx.shadowColor = 'rgba(0,0,0,0.6)';
+        ctx.shadowBlur = 15;
+
+        ctx.fillStyle = isangry ? '#2a0a0a' : '#4a1a1a';
+        ctx.fillRect(sx + 6, sy + 10, b.w - 12, 30);
+        ctx.fillRect(sx + 10, sy + 40, b.w - 20, 20);
 
         ctx.fillStyle = isangry ? '#4a1a1a' : '#6a2a2a';
         ctx.beginPath();
-        ctx.ellipse(sx + b.w/2, sy + b.h/2, b.w/2, b.h/2, 0, 0, 7);
+        ctx.ellipse(sx + 14, sy + 16, 10, 8, 0.2, 0, 7);
         ctx.fill();
-
-        ctx.fillStyle = isangry ? '#2a0a0a' : '#4a1a1a';
-        ctx.fillRect(sx + 10, sy + b.h - 20, b.w - 20, 15);
-
-        ctx.fillStyle = isangry ? '#8a3a3a' : '#aa5a5a';
-        ctx.fillRect(sx + 14, sy + b.h - 24, 8, 10);
-        ctx.fillRect(sx + b.w - 22, sy + b.h - 24, 8, 10);
+        ctx.beginPath();
+        ctx.ellipse(sx + b.w - 14, sy + 16, 10, 8, -0.2, 0, 7);
+        ctx.fill();
 
         ctx.fillStyle = isangry ? '#aaa' : '#ddd';
-        ctx.shadowBlur = 10;
+        ctx.shadowBlur = 5;
         ctx.beginPath();
-        ctx.arc(sx + 24, sy + 26, 8, 0, 7);
-        ctx.arc(sx + b.w - 24, sy + 26, 8, 0, 7);
+        ctx.moveTo(sx + 20, sy + 18);
+        ctx.lineTo(sx + 28, sy + 14);
+        ctx.lineTo(sx + 36, sy + 18);
+        ctx.lineTo(sx + 28, sy + 22);
+        ctx.closePath();
         ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(sx + b.w - 20, sy + 18);
+        ctx.lineTo(sx + b.w - 28, sy + 14);
+        ctx.lineTo(sx + b.w - 36, sy + 18);
+        ctx.lineTo(sx + b.w - 28, sy + 22);
+        ctx.closePath();
+        ctx.fill();
+
         ctx.shadowBlur = 0;
         ctx.fillStyle = '#a00';
         ctx.beginPath();
-        ctx.arc(sx + 24, sy + 26, 4, 0, 7);
-        ctx.arc(sx + b.w - 24, sy + 26, 4, 0, 7);
+        ctx.arc(sx + 24, sy + 18, 3, 0, 7);
+        ctx.arc(sx + b.w - 24, sy + 18, 3, 0, 7);
         ctx.fill();
 
-        ctx.fillStyle = isangry ? '#f00' : '#a44';
-        ctx.fillRect(sx + 30, sy + 42, 20, 6);
-        for (let i = 0; i < 6; i++) {
-            ctx.fillRect(sx + 26 + i*6, sy + 48, 4, 8);
-        }
-
-        for (let i = 0; i < 5; i++) {
-            ctx.fillStyle = isangry ? '#6a2a2a' : '#8a4a4a';
-            ctx.beginPath();
-            ctx.moveTo(sx + i*16 + 6, sy + b.h - 24);
-            ctx.lineTo(sx + i*16 + 12, sy + b.h - 36);
-            ctx.lineTo(sx + i*16 + 18, sy + b.h - 24);
-            ctx.fill();
+        ctx.fillStyle = isangry ? '#800' : '#a44';
+        ctx.fillRect(sx + 30, sy + 32, 20, 5);
+        for (let i = 0; i < 4; i++) {
+            ctx.fillRect(sx + 28 + i*6, sy + 37, 3, 6);
         }
 
         ctx.fillStyle = isangry ? '#4a0a0a' : '#3a1a1a';
         ctx.fillRect(sx + 4, sy + 8, 6, 20);
         ctx.fillRect(sx + b.w - 10, sy + 8, 6, 20);
+
+        ctx.fillStyle = isangry ? '#6a2a2a' : '#8a4a4a';
+        for (let i = 0; i < 4; i++) {
+            ctx.beginPath();
+            ctx.moveTo(sx + 8 + i*12, sy + b.h - 6);
+            ctx.lineTo(sx + 14 + i*12, sy + b.h - 18);
+            ctx.lineTo(sx + 20 + i*12, sy + b.h - 6);
+            ctx.fill();
+        }
 
         ctx.shadowBlur = 0;
     } else if (b.type === 'vereus') {
@@ -329,25 +332,25 @@ function drawboss(camx, camy) {
         const cx = sx + b.w/2;
         const cy = sy + b.h/2;
 
-        ctx.shadowColor = isangry ? '#f00' : '#48f';
-        ctx.shadowBlur = isangry ? 40 : 20;
+        ctx.shadowColor = 'rgba(0,0,0,0.7)';
+        ctx.shadowBlur = 20;
 
-        ctx.fillStyle = isangry ? '#4a0a0a' : '#d4c8b8';
+        ctx.fillStyle = isangry ? '#1a0505' : '#c8b8a8';
         ctx.beginPath();
-        ctx.arc(cx, cy, 30 * scale, 0, 7);
+        ctx.ellipse(cx, cy, 28*scale, 32*scale, 0, 0, 7);
         ctx.fill();
 
-        for (let i = 0; i < 8; i++) {
-            ctx.fillStyle = isangry ? 'rgba(80,0,0,0.3)' : 'rgba(0,0,0,0.1)';
-            ctx.fillRect(cx - 25*scale + i*7, cy - 20*scale, 2, 40*scale);
+        for (let i = 0; i < 6; i++) {
+            ctx.fillStyle = isangry ? 'rgba(60,0,0,0.3)' : 'rgba(0,0,0,0.08)';
+            ctx.fillRect(cx - 22*scale + i*8, cy - 24*scale, 2, 48*scale);
         }
 
-        ctx.fillStyle = isangry ? '#3a3a3a' : '#6a5a4a';
+        ctx.fillStyle = isangry ? '#2a1a1a' : '#5a4a3a';
         ctx.beginPath();
-        ctx.ellipse(cx - 20*scale, cy - 18*scale, 10*scale, 4*scale, 0.3, 0, 7);
+        ctx.ellipse(cx - 18*scale, cy - 20*scale, 8*scale, 3*scale, 0.3, 0, 7);
         ctx.fill();
         ctx.beginPath();
-        ctx.ellipse(cx + 20*scale, cy - 18*scale, 10*scale, 4*scale, -0.3, 0, 7);
+        ctx.ellipse(cx + 18*scale, cy - 20*scale, 8*scale, 3*scale, -0.3, 0, 7);
         ctx.fill();
 
         const eyeangle = Math.atan2((player.y + 20) - (cy), (player.x) - (cx));
@@ -359,75 +362,75 @@ function drawboss(camx, camy) {
         const ex2 = cx + eyedist * 0.5 + Math.cos(eyeangle)*eyeoffset;
         const ey2 = cy - 5*scale + Math.sin(eyeangle)*eyeoffset;
 
-        ctx.shadowBlur = isangry ? 30 : 15;
-        ctx.shadowColor = isangry ? '#f44' : '#f00';
+        ctx.shadowBlur = 15;
+        ctx.shadowColor = 'rgba(0,0,0,0.5)';
         ctx.fillStyle = '#ff0000';
         ctx.beginPath();
-        ctx.arc(ex1, ey1, 5*scale, 0, 7);
+        ctx.ellipse(ex1, ey1, 4*scale, 6*scale, 0, 0, 7);
         ctx.fill();
         ctx.beginPath();
-        ctx.arc(ex2, ey2, 5*scale, 0, 7);
+        ctx.ellipse(ex2, ey2, 4*scale, 6*scale, 0, 0, 7);
         ctx.fill();
         ctx.shadowBlur = 0;
         ctx.fillStyle = '#000';
         ctx.beginPath();
-        ctx.arc(ex1 + 2*scale, ey1 + 1*scale, 2*scale, 0, 7);
+        ctx.ellipse(ex1 + 2*scale, ey1 + 1*scale, 2*scale, 3*scale, 0, 0, 7);
         ctx.fill();
         ctx.beginPath();
-        ctx.arc(ex2 + 2*scale, ey2 + 1*scale, 2*scale, 0, 7);
+        ctx.ellipse(ex2 + 2*scale, ey2 + 1*scale, 2*scale, 3*scale, 0, 0, 7);
         ctx.fill();
 
         if (isangry) {
             ctx.fillStyle = '#000';
-            ctx.fillRect(cx - 20*scale, cy + 8*scale, 40*scale, 4*scale);
-            for (let i = 0; i < 8; i++) {
+            ctx.fillRect(cx - 18*scale, cy + 8*scale, 36*scale, 3*scale);
+            for (let i = 0; i < 6; i++) {
                 ctx.fillStyle = '#fff';
-                const tx = cx - 18*scale + i*5*scale;
-                ctx.fillRect(tx, cy + 12*scale, 2, 6*scale);
-                ctx.fillRect(tx+1, cy + 14*scale, 2, 6*scale);
+                const tx = cx - 16*scale + i*6*scale;
+                ctx.fillRect(tx, cy + 11*scale, 2, 5*scale);
+                ctx.fillRect(tx+1, cy + 13*scale, 2, 5*scale);
             }
         } else {
-            ctx.fillStyle = '#4a3a3a';
+            ctx.fillStyle = '#3a2a2a';
             ctx.fillRect(cx - 10*scale, cy + 6*scale, 20*scale, 2*scale);
         }
 
         ctx.shadowBlur = 0;
 
-        const hx = cx - 40*scale;
-        const hy = cy - 30*scale;
-        ctx.fillStyle = isangry ? '#6a3a3a' : '#8a7a6a';
+        const hx = cx - 36*scale;
+        const hy = cy - 32*scale;
+        ctx.fillStyle = isangry ? '#5a2a2a' : '#7a6a5a';
         ctx.beginPath();
         ctx.moveTo(hx, hy);
-        ctx.lineTo(hx - 15*scale, hy - 25*scale);
-        ctx.lineTo(hx - 10*scale, hy - 10*scale);
+        ctx.lineTo(hx - 12*scale, hy - 22*scale);
+        ctx.lineTo(hx - 8*scale, hy - 8*scale);
         ctx.fill();
-        const hx2 = cx + 40*scale;
+        const hx2 = cx + 36*scale;
         ctx.beginPath();
         ctx.moveTo(hx2, hy);
-        ctx.lineTo(hx2 + 15*scale, hy - 25*scale);
-        ctx.lineTo(hx2 + 10*scale, hy - 10*scale);
+        ctx.lineTo(hx2 + 12*scale, hy - 22*scale);
+        ctx.lineTo(hx2 + 8*scale, hy - 8*scale);
         ctx.fill();
 
-        ctx.fillStyle = isangry ? '#8a5a5a' : '#aaa090';
+        ctx.fillStyle = isangry ? '#7a4a4a' : '#9a8a7a';
         ctx.beginPath();
-        ctx.arc(cx - 35*scale, cy + 15*scale, 10*scale, 0, 7);
+        ctx.ellipse(cx - 32*scale, cy + 14*scale, 8*scale, 6*scale, 0, 0, 7);
         ctx.fill();
         ctx.beginPath();
-        ctx.arc(cx + 35*scale, cy + 15*scale, 10*scale, 0, 7);
-        ctx.fill();
-
-        ctx.fillStyle = isangry ? '#2a0a0a' : '#4a3a2a';
-        ctx.beginPath();
-        ctx.arc(cx - 35*scale, cy + 15*scale, 6*scale, 0, 7);
-        ctx.fill();
-        ctx.beginPath();
-        ctx.arc(cx + 35*scale, cy + 15*scale, 6*scale, 0, 7);
+        ctx.ellipse(cx + 32*scale, cy + 14*scale, 8*scale, 6*scale, 0, 0, 7);
         ctx.fill();
 
-        ctx.fillStyle = 'rgba(0,0,0,0.2)';
+        ctx.fillStyle = isangry ? '#1a0a0a' : '#3a2a1a';
+        ctx.beginPath();
+        ctx.ellipse(cx - 32*scale, cy + 14*scale, 4*scale, 3*scale, 0, 0, 7);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.ellipse(cx + 32*scale, cy + 14*scale, 4*scale, 3*scale, 0, 0, 7);
+        ctx.fill();
+
+        ctx.fillStyle = 'rgba(0,0,0,0.15)';
         for (let i = 0; i < 4; i++) {
-            const dx2 = (i - 1.5) * 15 * scale;
-            ctx.fillRect(cx + dx2 - 2*scale, cy + 25*scale, 4*scale, 15*scale);
+            const dx2 = (i - 1.5) * 14 * scale;
+            ctx.fillRect(cx + dx2 - 2*scale, cy + 24*scale, 4*scale, 14*scale);
         }
 
         ctx.shadowBlur = 0;
@@ -438,11 +441,11 @@ function drawboss(camx, camy) {
             const px = pr.x - camx;
             const py = pr.y - camy;
             ctx.save();
-            ctx.shadowColor = '#fff';
-            ctx.shadowBlur = 30;
-            ctx.fillStyle = '#fff';
+            ctx.shadowColor = 'rgba(0,0,0,0.3)';
+            ctx.shadowBlur = 10;
+            ctx.fillStyle = '#ffffff';
             ctx.beginPath();
-            ctx.arc(px, py, pr.r, 0, 7);
+            ctx.ellipse(px, py, pr.r, pr.r*0.6, 0, 0, 7);
             ctx.fill();
             ctx.restore();
         }
@@ -452,166 +455,132 @@ function drawboss(camx, camy) {
         const cx = sx + b.w/2;
         const cy = sy + b.h/2;
 
-        ctx.shadowColor = isangry ? '#f0f' : '#50f';
-        ctx.shadowBlur = 30;
+        ctx.shadowColor = 'rgba(0,0,0,0.8)';
+        ctx.shadowBlur = 25;
 
-        ctx.fillStyle = isangry ? '#1a0a1a' : '#0a0510';
+        ctx.fillStyle = isangry ? '#0a000a' : '#050208';
         ctx.beginPath();
-        ctx.arc(cx, cy, b.w*0.6, 0, 7);
+        ctx.ellipse(cx, cy, b.w*0.5, b.h*0.5, 0, 0, 7);
         ctx.fill();
 
         for (let i = 0; i < 12; i++) {
             const angle = i/12 * Math.PI * 2 + b.t/200;
-            const len = b.w*0.5 + Math.sin(b.t/300 + i)*10;
-            ctx.fillStyle = isangry ? 'rgba(100,0,100,0.3)' : 'rgba(50,0,80,0.3)';
+            const len = b.w*0.45 + Math.sin(b.t/300 + i)*8;
+            ctx.fillStyle = isangry ? 'rgba(60,0,60,0.2)' : 'rgba(30,0,40,0.2)';
             ctx.beginPath();
             ctx.moveTo(cx, cy);
             ctx.lineTo(cx + Math.cos(angle)*len, cy + Math.sin(angle)*len);
-            ctx.lineTo(cx + Math.cos(angle+0.3)*len*0.7, cy + Math.sin(angle+0.3)*len*0.7);
+            ctx.lineTo(cx + Math.cos(angle+0.2)*len*0.6, cy + Math.sin(angle+0.2)*len*0.6);
             ctx.fill();
         }
 
         ctx.shadowBlur = 0;
-        ctx.shadowColor = isangry ? '#f0f' : '#a0f';
-        ctx.shadowBlur = 20;
+        ctx.shadowColor = 'rgba(0,0,0,0.5)';
+        ctx.shadowBlur = 10;
 
-        ctx.fillStyle = isangry ? '#f44' : '#f0f';
+        ctx.fillStyle = isangry ? '#cc0000' : '#a040a0';
         ctx.beginPath();
-        ctx.arc(cx - 20, cy - 10, 8, 0, 7);
+        ctx.ellipse(cx - 18, cy - 8, 6, 4, 0.2, 0, 7);
         ctx.fill();
         ctx.beginPath();
-        ctx.arc(cx + 20, cy - 10, 8, 0, 7);
+        ctx.ellipse(cx + 18, cy - 8, 6, 4, -0.2, 0, 7);
         ctx.fill();
 
         ctx.shadowBlur = 0;
         ctx.fillStyle = '#000';
         ctx.beginPath();
-        ctx.arc(cx - 20, cy - 10, 3, 0, 7);
+        ctx.ellipse(cx - 18, cy - 8, 3, 2, 0, 0, 7);
         ctx.fill();
         ctx.beginPath();
-        ctx.arc(cx + 20, cy - 10, 3, 0, 7);
+        ctx.ellipse(cx + 18, cy - 8, 3, 2, 0, 0, 7);
         ctx.fill();
 
         if (isangry) {
-            ctx.fillStyle = '#f0f';
-            ctx.shadowBlur = 30;
+            ctx.fillStyle = '#a000a0';
+            ctx.shadowBlur = 10;
             ctx.beginPath();
-            ctx.arc(cx, cy + 10, 10, 0, 7);
+            ctx.ellipse(cx, cy + 8, 8, 5, 0, 0, 7);
             ctx.fill();
             ctx.shadowBlur = 0;
             ctx.fillStyle = '#000';
             ctx.beginPath();
-            ctx.arc(cx, cy + 10, 4, 0, 7);
+            ctx.ellipse(cx, cy + 8, 4, 2, 0, 0, 7);
             ctx.fill();
-            ctx.fillStyle = '#f0f';
-            ctx.fillRect(cx - 16, cy + 22, 32, 4);
-            for (let i = 0; i < 6; i++) {
-                ctx.fillRect(cx - 14 + i*6, cy + 26, 4, 8);
+            ctx.fillStyle = '#a000a0';
+            ctx.fillRect(cx - 14, cy + 18, 28, 3);
+            for (let i = 0; i < 5; i++) {
+                ctx.fillRect(cx - 12 + i*6, cy + 21, 3, 6);
             }
         } else {
-            ctx.fillStyle = '#a0f';
-            ctx.fillRect(cx - 12, cy + 14, 24, 3);
+            ctx.fillStyle = '#804080';
+            ctx.fillRect(cx - 10, cy + 12, 20, 2);
         }
 
         ctx.shadowBlur = 0;
 
-        ctx.fillStyle = isangry ? 'rgba(200,0,200,0.2)' : 'rgba(100,0,100,0.2)';
+        ctx.fillStyle = isangry ? 'rgba(150,0,150,0.15)' : 'rgba(80,0,80,0.15)';
         for (let i = 0; i < 6; i++) {
             const a = i/6 * Math.PI * 2 + b.t/500;
-            const r = b.w*0.4 + Math.sin(b.t/400 + i)*8;
+            const r = b.w*0.35 + Math.sin(b.t/400 + i)*6;
             ctx.beginPath();
-            ctx.arc(cx + Math.cos(a)*r, cy + Math.sin(a)*r, 10, 0, 7);
+            ctx.ellipse(cx + Math.cos(a)*r, cy + Math.sin(a)*r, 6, 4, a, 0, 7);
             ctx.fill();
         }
 
-        ctx.shadowColor = '#f0f';
-        ctx.shadowBlur = 10;
-        ctx.fillStyle = isangry ? '#f0f' : '#80f';
+        ctx.shadowColor = 'rgba(0,0,0,0.4)';
+        ctx.shadowBlur = 8;
+        ctx.fillStyle = isangry ? '#cc00cc' : '#600060';
         ctx.beginPath();
-        ctx.arc(cx - 30, cy - 25, 5, 0, 7);
+        ctx.ellipse(cx - 28, cy - 22, 4, 6, 0.3, 0, 7);
         ctx.fill();
         ctx.beginPath();
-        ctx.arc(cx + 30, cy - 25, 5, 0, 7);
+        ctx.ellipse(cx + 28, cy - 22, 4, 6, -0.3, 0, 7);
         ctx.fill();
         ctx.shadowBlur = 0;
 
     } else {
-        const op = b.baited ? 0.7 : 0.92;
-        ctx.fillStyle = 'rgba(5,2,10,'+op+')';
-        ctx.beginPath();
-        ctx.arc(sx + b.w/2, sy + b.h/2, b.w*0.7, 0, 7);
-        ctx.fill();
-        ctx.shadowColor = b.telegraph > 0 ? '#f4f' : 'rgba(120,40,160,0.8)';
-        ctx.shadowBlur = 30;
-        ctx.strokeStyle = b.telegraph > 0 ? '#f4f' : 'rgba(120,40,160,0.7)';
-        ctx.lineWidth = 4;
-        ctx.beginPath();
-        ctx.arc(sx + b.w/2, sy + b.h/2, b.w*0.7 + 6, 0, 7);
-        ctx.stroke();
-        ctx.shadowBlur = 0;
-
-        ctx.fillStyle = '#fff';
-        ctx.shadowColor = '#f0f';
+        ctx.shadowColor = 'rgba(0,0,0,0.7)';
         ctx.shadowBlur = 15;
+        ctx.fillStyle = 'rgba(10,5,20,0.8)';
         ctx.beginPath();
-        ctx.arc(sx + 22, sy + 32, 7, 0, 7);
+        ctx.ellipse(sx + b.w/2, sy + b.h/2, b.w*0.6, b.h*0.6, 0, 0, 7);
         ctx.fill();
         ctx.shadowBlur = 0;
-        ctx.fillStyle = '#000';
-        ctx.beginPath();
-        ctx.arc(sx + 22, sy + 32, 3, 0, 7);
-        ctx.fill();
-        ctx.strokeStyle = '#fff';
+        ctx.strokeStyle = 'rgba(80,40,120,0.5)';
         ctx.lineWidth = 2;
         ctx.beginPath();
-        ctx.moveTo(sx + 16, sy + 32);
-        ctx.lineTo(sx + 28, sy + 32);
+        ctx.ellipse(sx + b.w/2, sy + b.h/2, b.w*0.6+4, b.h*0.6+4, 0, 0, 7);
         ctx.stroke();
 
-        ctx.fillStyle = '#fff';
-        ctx.shadowColor = '#f0f';
-        ctx.shadowBlur = 15;
+        ctx.fillStyle = '#ccc';
         ctx.beginPath();
-        ctx.arc(sx + 58, sy + 32, 7, 0, 7);
+        ctx.ellipse(sx + 22, sy + 30, 6, 4, 0.2, 0, 7);
         ctx.fill();
-        ctx.shadowBlur = 0;
+        ctx.beginPath();
+        ctx.ellipse(sx + b.w - 22, sy + 30, 6, 4, -0.2, 0, 7);
+        ctx.fill();
         ctx.fillStyle = '#000';
         ctx.beginPath();
-        ctx.arc(sx + 58, sy + 32, 3, 0, 7);
+        ctx.ellipse(sx + 22, sy + 30, 3, 2, 0, 0, 7);
         ctx.fill();
-
-        ctx.fillStyle = '#fff';
-        ctx.shadowColor = '#f0f';
-        ctx.shadowBlur = 20;
         ctx.beginPath();
-        ctx.arc(sx + 40, sy + 14, 8, 0, 7);
+        ctx.ellipse(sx + b.w - 22, sy + 30, 3, 2, 0, 0, 7);
         ctx.fill();
-        ctx.shadowBlur = 0;
-        ctx.fillStyle = '#000';
-        ctx.beginPath();
-        ctx.arc(sx + 40, sy + 14, 4, 0, 7);
-        ctx.fill();
-
-        ctx.fillStyle = '#f0f';
-        ctx.shadowColor = '#f0f';
-        ctx.shadowBlur = 30;
-        ctx.beginPath();
-        ctx.arc(sx + 40, sy + 14, 8, 0, 7);
-        ctx.stroke();
-        ctx.shadowBlur = 0;
 
         ctx.fillStyle = '#a0a';
-        ctx.fillRect(sx + 30, sy + 48, 20, 6);
-        ctx.fillRect(sx + 34, sy + 54, 12, 4);
+        ctx.fillRect(sx + 30, sy + 44, 20, 4);
+        for (let i = 0; i < 4; i++) {
+            ctx.fillRect(sx + 28 + i*6, sy + 48, 3, 6);
+        }
     }
     ctx.restore();
 
     for (const ball of b.greenballs) {
         const px = ball.x - camx;
         const py = ball.y - camy;
-        ctx.shadowColor = '#0f0';
-        ctx.shadowBlur = 30;
-        ctx.fillStyle = ball.onground ? '#afa' : '#0f0';
+        ctx.shadowColor = 'rgba(0,0,0,0.3)';
+        ctx.shadowBlur = 10;
+        ctx.fillStyle = ball.onground ? '#8a8' : '#0a0';
         ctx.beginPath();
         ctx.arc(px, py, ball.r, 0, 7);
         ctx.fill();
@@ -622,9 +591,9 @@ function drawboss(camx, camy) {
         if (pr.ray) continue;
         const px = pr.x - camx;
         const py = pr.y - camy;
-        ctx.fillStyle = pr.green ? '#0f0' : (pr.dark ? '#a0f' : pr.gx ? '#f80' : '#48f');
-        ctx.shadowColor = ctx.fillStyle;
-        ctx.shadowBlur = 12;
+        ctx.fillStyle = pr.green ? '#0a0' : (pr.dark ? '#808' : pr.gx ? '#880' : '#448');
+        ctx.shadowColor = 'rgba(0,0,0,0.3)';
+        ctx.shadowBlur = 8;
         ctx.beginPath();
         ctx.arc(px, py, pr.r, 0, 7);
         ctx.fill();
