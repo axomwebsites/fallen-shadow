@@ -553,14 +553,14 @@ function render() {
         const sx = m.x - camx, sy = m.y - camy;
         if (m.spike) {
             ctx.fillStyle = '#f44';
-            ctx.shadowColor = '#f00';
-            ctx.shadowBlur = 20;
+            ctx.shadowColor = 'rgba(0,0,0,0.4)';
+            ctx.shadowBlur = 8;
             ctx.fillRect(sx, sy, m.w, m.h);
             ctx.shadowBlur = 0;
         } else {
             ctx.fillStyle = horrorenabled ? '#3a1010' : '#3a3050';
-            ctx.shadowColor = horrorenabled ? '#f00' : '#6af';
-            ctx.shadowBlur = 15;
+            ctx.shadowColor = 'rgba(0,0,0,0.3)';
+            ctx.shadowBlur = 6;
             ctx.fillRect(sx, sy, m.w, m.h);
             ctx.shadowBlur = 0;
             ctx.fillStyle = th.accent;
@@ -571,8 +571,8 @@ function render() {
         const sx = hz.x - camx, sy = hz.y - camy;
         if (hz.type === 'spike') {
             ctx.fillStyle = horrorenabled ? '#f44' : '#a33';
-            ctx.shadowColor = '#f44';
-            ctx.shadowBlur = 10;
+            ctx.shadowColor = 'rgba(0,0,0,0.3)';
+            ctx.shadowBlur = 5;
             const n = Math.floor(hz.w / 16);
             for (let i = 0; i < n; i++) {
                 ctx.beginPath();
@@ -596,9 +596,9 @@ function render() {
         ctx.save();
         ctx.translate(sx, sy);
         ctx.rotate(s.a);
-        ctx.shadowColor = horrorenabled ? '#f00' : '#f80';
-        ctx.shadowBlur = 20;
-        ctx.fillStyle = horrorenabled ? '#f88' : '#ccc';
+        ctx.shadowColor = 'rgba(0,0,0,0.3)';
+        ctx.shadowBlur = 8;
+        ctx.fillStyle = horrorenabled ? '#888' : '#ccc';
         ctx.beginPath();
         for (let i = 0; i < 12; i++) {
             const a = i/12 * Math.PI * 2;
@@ -617,9 +617,9 @@ function render() {
     for (const c of level.coins) {
         if (c.got) continue;
         const sx = c.x - camx, sy = c.y - camy + Math.sin(performance.now()/300 + c.x) * 4;
-        ctx.shadowColor = horrorenabled ? '#f80' : '#fd6';
-        ctx.shadowBlur = 20;
-        ctx.fillStyle = horrorenabled ? '#f90' : '#fd6';
+        ctx.shadowColor = 'rgba(0,0,0,0.2)';
+        ctx.shadowBlur = 5;
+        ctx.fillStyle = horrorenabled ? '#f80' : '#fd6';
         ctx.beginPath();
         ctx.arc(sx, sy, 8, 0, 7);
         ctx.fill();
@@ -636,8 +636,8 @@ function render() {
         const sx = e.x - camx;
         const sy = e.y - camy;
 
-        ctx.shadowColor = horrorenabled ? '#f00' : '#0a0';
-        ctx.shadowBlur = 10;
+        ctx.shadowColor = 'rgba(0,0,0,0.4)';
+        ctx.shadowBlur = 6;
 
         ctx.fillStyle = horrorenabled ? '#3a1a1a' : '#2a4a2a';
         ctx.beginPath();
@@ -648,18 +648,17 @@ function render() {
         ctx.fillRect(sx + 4, sy + e.h - 8, e.w - 8, 6);
 
         ctx.fillStyle = '#fff';
-        ctx.shadowBlur = 5;
-        ctx.shadowColor = horrorenabled ? '#f44' : '#4f4';
+        ctx.shadowBlur = 3;
         ctx.beginPath();
-        ctx.arc(sx + 6, sy + 8, 4, 0, 7);
-        ctx.arc(sx + e.w - 6, sy + 8, 4, 0, 7);
+        ctx.ellipse(sx + 6, sy + 8, 3, 2, 0, 0, 7);
+        ctx.ellipse(sx + e.w - 6, sy + 8, 3, 2, 0, 0, 7);
         ctx.fill();
         ctx.shadowBlur = 0;
 
         ctx.fillStyle = '#000';
         ctx.beginPath();
-        ctx.arc(sx + 6, sy + 8, 1.5, 0, 7);
-        ctx.arc(sx + e.w - 6, sy + 8, 1.5, 0, 7);
+        ctx.ellipse(sx + 6, sy + 8, 1.5, 1, 0, 0, 7);
+        ctx.ellipse(sx + e.w - 6, sy + 8, 1.5, 1, 0, 0, 7);
         ctx.fill();
 
         ctx.fillStyle = horrorenabled ? '#f44' : '#4a4';
@@ -677,8 +676,8 @@ function render() {
 
     if (!level.doorhidden || (level.boss && level.boss.dead)) {
         const sx = level.doorx - camx, sy = 380 - camy;
-        ctx.shadowColor = horrorenabled ? '#f44' : '#a8f';
-        ctx.shadowBlur = 30;
+        ctx.shadowColor = 'rgba(0,0,0,0.5)';
+        ctx.shadowBlur = 12;
         ctx.fillStyle = horrorenabled ? '#200' : '#1a1020';
         ctx.fillRect(sx - 4, sy - 70, 40, 70);
         const glow = 0.5 + Math.sin(performance.now()/300) * 0.3;
@@ -688,7 +687,7 @@ function render() {
     }
 
     ctx.shadowColor = 'rgba(0,0,0,0.8)';
-    ctx.shadowBlur = 20;
+    ctx.shadowBlur = 15;
     if (player.alive) drawplayer(camx, camy);
     ctx.shadowBlur = 0;
     drawparticles(camx, camy);
