@@ -33,10 +33,11 @@ let score = 0;
 let shake = 0;
 let camx = 0, camy = 0, camzoom = 1, camtargetzoom = 1.3;
 let bossdeadflag = false;
-let endseq = 0, endtimer = 0, cagey = -200, wifex = 0, wifewalk = 0, heartt = 0, wifefell = false, wifefally = 0;
+let endseq = 0, endtimer = 0, cagey = -300, wifex = 0, wifewalk = 0, heartt = 0, wifefell = false, wifefally = 0;
 let settingsfrompause = false;
 let graintimer = 0;
 let horrorenabled = false;
+let endphase = 0;
 
 const savedskin = localStorage.getItem('playerskin');
 if (savedskin) {
@@ -104,50 +105,84 @@ function levelwin() {
 }
 
 function startendsequence() {
-    endseq = 1; endtimer = 0; cagey = -300; wifex = player.x + 260; wifewalk = 0; heartt = 0; wifefell = false; wifefally = 0;
+    endseq = 1;
+    endtimer = 0;
+    cagey = -300;
+    wifex = player.x + 260;
+    wifewalk = 0;
+    heartt = 0;
+    wifefell = false;
+    wifefally = 0;
+    endphase = 0;
     state = stateend;
     document.getElementById('hud').classList.add('hidden');
     document.getElementById('touchcontrols').classList.add('hidden');
     document.getElementById('joystickwrap').classList.add('hidden');
     document.getElementById('bossbarwrap').classList.add('hidden');
+    camtargetzoom = 1.3;
 }
 
 function updateend(dt) {
     endtimer += dt;
     const groundy = 380;
-    if (endseq === 1) {
-        cagey += 8;
-        if (cagey >= groundy - 90) { cagey = groundy - 90; endseq = 2; endtimer = 0; beep(150, 0.4, 'sawtooth', 0.2); shake = 10; }
-    } else if (endseq === 2) {
-        if (endtimer < 400) { if (Math.random() < 0.3) burst(wifex, groundy - 50, '#888', 3); } else { endseq = 3; endtimer = 0; }
-    } else if (endseq === 3) {
-        wifewalk += dt;
-        const tx = player.x + 40;
-        if (wifex > tx) { wifex -= 2; } else { endseq = 4; endtimer = 0; heartt = 0; }
-    } else if (endseq === 4) {
-        heartt += dt;
-        if (heartt > 1800) { endseq = 5; endtimer = 0; }
-    } else if (endseq === 5) {
-        if (!wifefell) { wifefell = true; shake = 14; beep(100, 0.5, 'sawtooth', 0.2); burst(wifex, groundy, '#444', 20); }
-        wifefally += dt * 0.5;
-        if (endtimer > 1500) { endseq = 6; endtimer = 0; camtargetzoom = 2.2; }
-    } else if (endseq === 6) {
-        if (endtimer > 2500) { endseq = 7; endtimer = 0; shake = 12; beep(90, 0.6, 'sawtooth', 0.25); burst(player.x, player.y, '#c33', 30); }
-    } else if (endseq === 7) {
-        if (endtimer > 1500) { endseq = 8; endtimer = 0; document.getElementById('fadeblack').classList.add('on'); }
-    } else if (endseq === 8) {
-        if (endtimer > 2200) { showendtext(); endseq = 9; }
+    if (endphase === 0) {
+        if (endseq === 1) {
+            cagey += 8;
+            if (cagey >= groundy - 90) { cagey = groundy - 90; endseq = 2; endtimer = 0; beep(150, 0.4, 'sawtooth', 0.2); shake = 10; }
+        } else if (endseq === 2) {
+            if (endtimer < 400) {
+                if (Math.random() < 0.3) burst(wifex, groundy - 50, '#888', 3);
+            } else { endseq = 3; endtimer = 0; }
+        } else if (endseq === 3) {
+            wifewalk += dt;
+            const tx = player.x + 40;
+            if (wifex > tx) { wifex -= 2; } else { endseq = 4; endtimer = 0; heartt = 0; }
+        } else if (endseq === 4) {
+            heartt += dt;
+            if (heartt > 1800) { endseq = 5; endtimer = 0; }
+        } else if (endseq === 5) {
+            if (!wifefell) { wifefell = true; shake = 14; beep(100, 0.5, 'sawtooth', 0.2); burst(wifex, groundy, '#444', 20); }
+            wifefally += dt * 0.5;
+            const targetCamY = wifefally * 0.5;
+            camy += (targetCamY - camy) * 0.05;
+            if (endtimer > 1500) {
+                endseq = 6;
+                endtimer = 0;
+                endphase = 1;
+                camtargetzoom = 2.2;
+                camx = player.x - (W / camtargetzoom) * 0.4;
+                camy = 0;
+            }
+        }
+    } else if (endphase === 1) {
+        const targetCamX = player.x - (W / camtargetzoom) * 0.4;
+        camx += (targetCamX - camx) * 0.04;
+        camzoom += (camtargetzoom - camzoom) * 0.03;
+        if (endtimer > 2000) {
+            endphase = 2;
+            endtimer = 0;
+            shake = 18;
+            burst(player.x, player.y + player.h/2, '#c33', 50);
+            beep(200, 0.5, 'sawtooth', 0.25);
+        }
+    } else if (endphase === 2) {
+        if (endtimer > 1500) {
+            endphase = 3;
+            endtimer = 0;
+            document.getElementById('fadeblack').classList.add('on');
+        }
+    } else if (endphase === 3) {
+        if (endtimer > 2200) {
+            showendtext();
+            endphase = 4;
+        }
     }
-    const targetcamx = player.x - (W / camtargetzoom) * 0.4;
-    camx += (targetcamx - camx) * 0.04;
-    camzoom += (camtargetzoom - camzoom) * 0.03;
 }
 
 function showendtext() {
     document.getElementById('endscreen').classList.remove('hidden');
-    document.getElementById('fadeblack').classList.add('on');
     const el = document.getElementById('endtext');
-    el.textContent = "The Fallen Shadow\nThe End\n\nDeveloper : Axom\nArtist : Acone";
+    el.textContent = "The Fallen Shadow\n\nThe End\n\nDeveloper : Axom\nArtist : Acone";
     setTimeout(() => el.classList.add('show'), 300);
     setTimeout(() => {
         const b = document.createElement('button');
@@ -159,7 +194,7 @@ function showendtext() {
         b.onclick = gomenu;
         document.getElementById('endscreen').appendChild(b);
         setTimeout(() => b.style.opacity = 1, 100);
-    }, 6000);
+    }, 4000);
 }
 
 function drawend() {
@@ -168,50 +203,54 @@ function drawend() {
     ctx.translate(W/2, H/2);
     ctx.scale(camzoom, camzoom);
     ctx.translate(-W/2, -H/2);
+
     ctx.fillStyle = '#0a0610';
     ctx.fillRect(camx - 50, 0, W + 100, H);
+
     const groundy = 380;
-    ctx.fillStyle = th.ground;
+    ctx.fillStyle = '#2a2236';
     ctx.fillRect(camx - 50, groundy - camy, W + 100, 200);
-    if (endseq >= 5) { ctx.fillStyle = '#000'; ctx.fillRect(wifex - camx - 30, groundy - camy, 60, 200); }
-    if (endseq <= 4) {
-        const cy = cagey;
-        ctx.strokeStyle = '#555'; ctx.lineWidth = 4;
-        if (endseq < 2) {
-            ctx.strokeRect(wifex - camx - 35, cy - camy, 70, 90);
-            for (let i = 0; i < 5; i++) {
-                ctx.beginPath();
-                ctx.moveTo(wifex - camx - 35 + i * 17.5, cy - camy);
-                ctx.lineTo(wifex - camx - 35 + i * 17.5, cy - camy + 90);
-                ctx.stroke();
+
+    if (endphase === 0) {
+        if (endseq <= 4) {
+            const cy = cagey;
+            if (endseq < 2) {
+                ctx.strokeStyle = '#555';
+                ctx.lineWidth = 4;
+                ctx.strokeRect(wifex - camx - 35, cy - camy, 70, 90);
+                for (let i = 0; i < 5; i++) {
+                    ctx.beginPath();
+                    ctx.moveTo(wifex - camx - 35 + i * 17.5, cy - camy);
+                    ctx.lineTo(wifex - camx - 35 + i * 17.5, cy - camy + 90);
+                    ctx.stroke();
+                }
             }
+            drawnightchargeneral(ctx, wifex - camx, groundy - camy, -1, '#e8b0c8');
+        } else if (wifefell) {
+            drawnightchargeneral(ctx, wifex - camx, groundy - camy + wifefally, -1, '#e8b0c8');
+            ctx.fillStyle = '#000';
+            ctx.fillRect(wifex - camx - 20, groundy - camy, 40, 200);
         }
     }
-    if (endseq >= 2 && !(endseq >= 5)) {
-        drawnightchargeneral(ctx, wifex - camx, groundy - camy, -1, '#e8b0c8');
+
+    if (endphase < 2) {
+        drawnightchargeneral(ctx, player.x - camx, groundy - camy, 1, '#d9d2b8');
+    } else if (endphase === 2) {
+        const hx = player.x - camx;
+        const hy = groundy - 60 - camy;
+        drawbrokenheart(ctx, hx, hy, 20);
+        ctx.globalAlpha = 1 - Math.min(1, endtimer/1500);
+        drawnightchargeneral(ctx, player.x - camx, groundy - camy, 1, '#d9d2b8');
+        ctx.globalAlpha = 1;
     }
-    if (endseq >= 5) {
-        drawnightchargeneral(ctx, wifex - camx, groundy - camy + wifefally, -1, '#e8b0c8');
-    }
-    if (endseq === 4 && heartt < 1500) {
-        const hx = (player.x + wifex)/2 - camx, hy = groundy - 90 - camy;
+
+    if (endphase === 0 && endseq === 4 && heartt < 1500) {
+        const hx = (player.x + wifex)/2 - camx;
+        const hy = groundy - 90 - camy;
         const s = 1 + Math.sin(heartt/120)*0.15;
         drawheart(ctx, hx, hy, 14*s, '#e0407a');
     }
-    if (endseq < 8 || endtimer < 1500) {
-        drawnightchargeneral(ctx, player.x - camx, groundy - camy, 1, '#d9d2b8');
-    }
-    if (endseq >= 6) {
-        const hx = player.x - camx, hy = groundy - 60 - camy;
-        if (endseq === 6) {
-            const glow = Math.min(1, endtimer/1500);
-            ctx.globalAlpha = glow;
-            drawheart(ctx, hx, hy, 10, '#ff4070');
-            ctx.globalAlpha = 1;
-        } else if (endseq >= 7) {
-            drawbrokenheart(ctx, hx, hy, 10);
-        }
-    }
+
     ctx.restore();
     drawparticles(camx, camy);
 }
@@ -229,8 +268,14 @@ function drawheart(ctx, x, y, s, c) {
 
 function drawbrokenheart(ctx, x, y, s) {
     ctx.save(); ctx.translate(x, y); ctx.fillStyle = '#a02040';
-    ctx.beginPath(); ctx.moveTo(0, s*0.3); ctx.bezierCurveTo(-s, -s*0.6, -s, s*0.4, -2, s); ctx.lineTo(-2, s*0.3); ctx.closePath(); ctx.fill();
-    ctx.beginPath(); ctx.moveTo(2, s*0.4); ctx.bezierCurveTo(s, s*0.4, s, -s*0.6, 2, s*0.3); ctx.lineTo(2, s); ctx.closePath(); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(0, s*0.3);
+    ctx.bezierCurveTo(-s, -s*0.6, -s, s*0.4, -2, s);
+    ctx.lineTo(-2, s*0.3);
+    ctx.closePath(); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(2, s*0.4);
+    ctx.bezierCurveTo(s, s*0.4, s, -s*0.6, 2, s*0.3);
+    ctx.lineTo(2, s);
+    ctx.closePath(); ctx.fill();
     ctx.restore();
 }
 
@@ -351,7 +396,6 @@ function update(dt) {
             m.dy = m.y - prevy; m.dx = 0;
         }
         if (m.spike) {
-    
             const dx = (p.x + p.w/2) - (m.x + m.w/2);
             const dy = (p.y + ph/2) - (m.y + m.h/2);
             if (Math.abs(dx) < m.w/2 + p.w/2 - 2 && Math.abs(dy) < m.h/2 + ph/2 - 2) {
