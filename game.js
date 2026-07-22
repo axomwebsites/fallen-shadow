@@ -628,18 +628,44 @@ function render() {
 
     for (const e of level.enemies) {
         if (!e.alive) continue;
-        const sx = e.x - camx, sy = e.y - camy;
-        ctx.fillStyle = horrorenabled ? '#d44' : '#4a4';
+        const sx = e.x - camx;
+        const sy = e.y - camy;
+
         ctx.shadowColor = horrorenabled ? '#f00' : '#0a0';
         ctx.shadowBlur = 10;
-        ctx.fillRect(sx, sy, e.w, e.h);
-        ctx.shadowBlur = 0;
+
+        ctx.fillStyle = horrorenabled ? '#3a1a1a' : '#2a4a2a';
+        ctx.beginPath();
+        ctx.ellipse(sx + e.w/2, sy + e.h/2, e.w/2, e.h/2, 0, 0, 7);
+        ctx.fill();
+
+        ctx.fillStyle = horrorenabled ? '#5a2a2a' : '#3a6a3a';
+        ctx.fillRect(sx + 4, sy + e.h - 8, e.w - 8, 6);
+
         ctx.fillStyle = '#fff';
-        ctx.fillRect(sx + 4, sy + 4, 4, 4);
-        ctx.fillRect(sx + e.w - 8, sy + 4, 4, 4);
+        ctx.shadowBlur = 5;
+        ctx.shadowColor = horrorenabled ? '#f44' : '#4f4';
+        ctx.beginPath();
+        ctx.arc(sx + 6, sy + 8, 4, 0, 7);
+        ctx.arc(sx + e.w - 6, sy + 8, 4, 0, 7);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+
         ctx.fillStyle = '#000';
-        ctx.fillRect(sx + 6, sy + 6, 2, 2);
-        ctx.fillRect(sx + e.w - 6, sy + 6, 2, 2);
+        ctx.beginPath();
+        ctx.arc(sx + 6, sy + 8, 1.5, 0, 7);
+        ctx.arc(sx + e.w - 6, sy + 8, 1.5, 0, 7);
+        ctx.fill();
+
+        ctx.fillStyle = horrorenabled ? '#f44' : '#4a4';
+        ctx.fillRect(sx + e.w/2 - 2, sy + 14, 4, 3);
+        ctx.fillRect(sx + e.w/2 - 4, sy + 12, 8, 2);
+
+        ctx.fillStyle = horrorenabled ? '#8a2a2a' : '#4a6a4a';
+        ctx.fillRect(sx + 2, sy + 4, 3, 8);
+        ctx.fillRect(sx + e.w - 5, sy + 4, 3, 8);
+
+        ctx.shadowBlur = 0;
     }
 
     drawboss(camx, camy);
