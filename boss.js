@@ -13,6 +13,9 @@ function updateboss(dt) {
         shake = 10;
         b.attackt = 0;
         document.getElementById('bossphase').textContent = b.phasenames[ph];
+        if (b.type === 'vereus' && ph === 2) {
+            b.chargecooldown = 0;
+        }
     }
     document.getElementById('bossfill').style.width = (b.hp / b.maxhp * 100) + '%';
 
@@ -42,22 +45,71 @@ function updateboss(dt) {
             b.projectiles.push({ x: b.x, y: groundy - 12, vx: -5, vy: 0, r: 10, gx: true });
             b.projectiles.push({ x: b.x + b.w, y: groundy - 12, vx: 5, vy: 0, r: 10, gx: true });
         }
-    } else if (b.type === 'float') {
+    } else if (b.type === 'vereus') {
         b.hover += dt;
-        const ty = 120 + Math.sin(b.hover/500) * 40;
-        const tx = p.x + Math.sin(b.hover/800) * 200;
+        const basey = b.phase === 0 ? 180 : (b.phase === 1 ? 160 : 140);
+        const ty = basey + Math.sin(b.hover/500) * 30;
+        const tx = p.x + Math.sin(b.hover/800) * 150;
         b.x += (tx - b.x) * 0.02 * spd;
         b.y += (ty - b.y) * 0.04;
         b.baited = (b.phase === 2 && Math.cos(b.t/700) > 0.5);
-        if (b.attackt > (b.phase >= 3 ? 500 : 900)) {
-            b.attackt = 0;
-            const ang = Math.atan2((p.y + 20) - (b.y + b.h/2), (p.x) - (b.x + b.w/2));
-            const sp = 4 + b.phase;
-            b.projectiles.push({ x: b.x + b.w/2, y: b.y + b.h/2, vx: Math.cos(ang)*sp, vy: Math.sin(ang)*sp, r: 9 });
-            if (b.phase >= 3) {
-                for (let a = -0.4; a <= 0.4; a += 0.4) {
-                    b.projectiles.push({ x: b.x + b.w/2, y: b.y + b.h/2, vx: Math.cos(ang+a)*sp, vy: Math.sin(ang+a)*sp, r: 8 });
+
+        if (b.phase === 0) {
+            if (b.attackt > 900) {
+                b.attackt = 0;
+                const ang = Math.atan2((p.y + 20) - (b.y + b.h/2), (p.x) - (b.x + b.w/2));
+                const sp = 5;
+                b.projectiles.push({ x: b.x + b.w/2, y: b.y + b.h/2, vx: Math.cos(ang)*sp, vy: Math.sin(ang)*sp, r: 6, ray: true });
+            }
+        } else if (b.phase === 1) {
+            if (b.attackt > 700) {
+                b.attackt = 0;
+                const ang = Math.atan2((p.y + 20) - (b.y + b.h/2), (p.x) - (b.x + b.w/2));
+                const sp = 6.5;
+                b.projectiles.push({ x: b.x + b.w/2, y: b.y + b.h/2, vx: Math.cos(ang)*sp, vy: Math.sin(ang)*sp, r: 8, ray: true });
+                b.projectiles.push({ x: b.x + b.w/2, y: b.y + b.h/2, vx: Math.cos(ang+0.3)*sp*0.8, vy: Math.sin(ang+0.3)*sp*0.8, r: 6, ray: true });
+                b.projectiles.push({ x: b.x + b.w/2, y: b.y + b.h/2, vx: Math.cos(ang-0.3)*sp*0.8, vy: Math.sin(ang-0.3)*sp*0.8, r: 6, ray: true });
+            }
+        } else if (b.phase === 2) {
+            if (!b.charging) {
+                if (b.attackt > 500) {
+                    b.attackt = 0;
+                    b.charging = true;
+                    b.chargecooldown = 200;
+                    b.chargevx = (p.x > b.x ? 1 : -1) * 8;
+                    b.chargevy = -2;
+                    shake = 8;
                 }
+            } else {
+                b.x += b.chargevx * dt/16;
+                b.y += b.chargevy * dt/16;
+                b.chargevy += 0.5;
+                if (b.y > groundy - b.h) {
+                    b.y = groundy - b.h;
+                    b.chargevy = 0;
+                    shake = 14;
+                    burst(b.x + b.w/2, b.y + b.h, '#f44', 20);
+                    b.charging = false;
+                    b.chargecooldown = 1200;
+                }
+                if (b.x < 50 || b.x > level.length - 50) {
+                    b.charging = false;
+                    b.chargecooldown = 1000;
+                }
+                const dx = (p.x + p.w/2) - (b.x + b.w/2);
+                const dy = (p.y + p.h/2) - (b.y + b.h/2);
+                if (Math.abs(dx) < 50 && Math.abs(dy) < 50 && b.charging) {
+                    playerdie();
+                    return;
+                }
+                if (b.chargecooldown > 0) b.chargecooldown -= dt;
+                else if (!b.charging) {
+                    b.attackt = 500;
+                }
+            }
+            if (b.hp < b.maxhp * 0.4 && b.hp > 0) {
+                b.hp += 0.08;
+                if (b.hp > b.maxhp * 0.45) b.hp = b.maxhp * 0.45;
             }
         }
     } else {
@@ -157,15 +209,20 @@ function updateboss(dt) {
     for (let i = b.projectiles.length - 1; i >= 0; i--) {
         const pr = b.projectiles[i];
         if (pr.green) continue;
-        pr.vy = (pr.vy || 0) + 0.3;
-        pr.x += pr.vx;
-        pr.y += pr.vy;
-        if (pr.y >= groundy - pr.r) {
-            pr.y = groundy - pr.r;
-            pr.vy = 0;
-            pr.vx = 0;
-            pr.onground = true;
-            if (!pr.life) pr.life = 180;
+        if (pr.ray) {
+            pr.x += pr.vx;
+            pr.y += pr.vy;
+        } else {
+            pr.vy = (pr.vy || 0) + 0.3;
+            pr.x += pr.vx;
+            pr.y += pr.vy;
+            if (pr.y >= groundy - pr.r) {
+                pr.y = groundy - pr.r;
+                pr.vy = 0;
+                pr.vx = 0;
+                pr.onground = true;
+                if (!pr.life) pr.life = 180;
+            }
         }
         if (pr.life !== undefined) {
             pr.life -= 1;
@@ -250,35 +307,130 @@ function drawboss(camx, camy) {
             ctx.lineTo(sx + i*16 + 20, sy + b.h - 16);
             ctx.fill();
         }
-    } else if (b.type === 'float') {
-        const glow = 0.4 + Math.sin(b.t/200)*0.2;
-        ctx.shadowColor = '#48f';
-        ctx.shadowBlur = 30;
-        ctx.fillStyle = b.baited ? '#6af' : '#247';
+    } else if (b.type === 'vereus') {
+        const isangry = b.phase === 2;
+        const scale = b.phase === 0 ? 1 : (b.phase === 1 ? 1.2 : 1.5);
+        const cx = sx + b.w/2;
+        const cy = sy + b.h/2;
+
+        ctx.shadowColor = isangry ? '#f00' : '#48f';
+        ctx.shadowBlur = isangry ? 40 : 20;
+
+        ctx.fillStyle = isangry ? '#4a0a0a' : '#d4c8b8';
         ctx.beginPath();
-        ctx.ellipse(sx + b.w/2, sy + b.h/2, b.w/2, b.h/2, 0, 0, 7);
+        ctx.arc(cx, cy, 30 * scale, 0, 7);
+        ctx.fill();
+
+        for (let i = 0; i < 8; i++) {
+            ctx.fillStyle = isangry ? 'rgba(80,0,0,0.3)' : 'rgba(0,0,0,0.1)';
+            ctx.fillRect(cx - 25*scale + i*7, cy - 20*scale, 2, 40*scale);
+        }
+
+        ctx.fillStyle = isangry ? '#3a3a3a' : '#6a5a4a';
+        ctx.beginPath();
+        ctx.ellipse(cx - 20*scale, cy - 18*scale, 10*scale, 4*scale, 0.3, 0, 7);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.ellipse(cx + 20*scale, cy - 18*scale, 10*scale, 4*scale, -0.3, 0, 7);
+        ctx.fill();
+
+        const eyeangle = Math.atan2((player.y + 20) - (cy), (player.x) - (cx));
+        const eyedist = 12 * scale;
+        const eyeoffset = 6 * scale;
+
+        const ex1 = cx - eyedist * 0.5 + Math.cos(eyeangle)*eyeoffset;
+        const ey1 = cy - 5*scale + Math.sin(eyeangle)*eyeoffset;
+        const ex2 = cx + eyedist * 0.5 + Math.cos(eyeangle)*eyeoffset;
+        const ey2 = cy - 5*scale + Math.sin(eyeangle)*eyeoffset;
+
+        ctx.shadowBlur = isangry ? 30 : 15;
+        ctx.shadowColor = isangry ? '#f44' : '#f00';
+        ctx.fillStyle = '#ff0000';
+        ctx.beginPath();
+        ctx.arc(ex1, ey1, 5*scale, 0, 7);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(ex2, ey2, 5*scale, 0, 7);
         ctx.fill();
         ctx.shadowBlur = 0;
-        ctx.fillStyle = '#6af';
-        ctx.fillRect(sx + 20, sy + 20, 40, 8);
-        ctx.fillRect(sx + 20, sy + 52, 40, 8);
-        ctx.fillStyle = '#fff';
-        ctx.shadowColor = '#6af';
-        ctx.shadowBlur = 20;
+        ctx.fillStyle = '#000';
         ctx.beginPath();
-        ctx.arc(sx + 24, sy + 32, 5, 0, 7);
-        ctx.arc(sx + 56, sy + 32, 5, 0, 7);
+        ctx.arc(ex1 + 2*scale, ey1 + 1*scale, 2*scale, 0, 7);
         ctx.fill();
+        ctx.beginPath();
+        ctx.arc(ex2 + 2*scale, ey2 + 1*scale, 2*scale, 0, 7);
+        ctx.fill();
+
+        if (isangry) {
+            ctx.fillStyle = '#000';
+            ctx.fillRect(cx - 20*scale, cy + 8*scale, 40*scale, 4*scale);
+            for (let i = 0; i < 8; i++) {
+                ctx.fillStyle = '#fff';
+                const tx = cx - 18*scale + i*5*scale;
+                ctx.fillRect(tx, cy + 12*scale, 2, 6*scale);
+                ctx.fillRect(tx+1, cy + 14*scale, 2, 6*scale);
+            }
+        } else {
+            ctx.fillStyle = '#4a3a3a';
+            ctx.fillRect(cx - 10*scale, cy + 6*scale, 20*scale, 2*scale);
+        }
+
         ctx.shadowBlur = 0;
-        ctx.fillStyle = '#224';
+
+        const hx = cx - 40*scale;
+        const hy = cy - 30*scale;
+        ctx.fillStyle = isangry ? '#6a3a3a' : '#8a7a6a';
         ctx.beginPath();
-        ctx.arc(sx + 24, sy + 32, 2, 0, 7);
-        ctx.arc(sx + 56, sy + 32, 2, 0, 7);
+        ctx.moveTo(hx, hy);
+        ctx.lineTo(hx - 15*scale, hy - 25*scale);
+        ctx.lineTo(hx - 10*scale, hy - 10*scale);
         ctx.fill();
-        ctx.fillStyle = 'rgba(100,160,255,'+glow+')';
+        const hx2 = cx + 40*scale;
         ctx.beginPath();
-        ctx.ellipse(sx + b.w/2, sy + b.h/2, b.w/2+10, b.h/2+10, 0, 0, 7);
-        ctx.stroke();
+        ctx.moveTo(hx2, hy);
+        ctx.lineTo(hx2 + 15*scale, hy - 25*scale);
+        ctx.lineTo(hx2 + 10*scale, hy - 10*scale);
+        ctx.fill();
+
+        ctx.fillStyle = isangry ? '#8a5a5a' : '#aaa090';
+        ctx.beginPath();
+        ctx.arc(cx - 35*scale, cy + 15*scale, 10*scale, 0, 7);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(cx + 35*scale, cy + 15*scale, 10*scale, 0, 7);
+        ctx.fill();
+
+        ctx.fillStyle = isangry ? '#2a0a0a' : '#4a3a2a';
+        ctx.beginPath();
+        ctx.arc(cx - 35*scale, cy + 15*scale, 6*scale, 0, 7);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(cx + 35*scale, cy + 15*scale, 6*scale, 0, 7);
+        ctx.fill();
+
+        ctx.fillStyle = 'rgba(0,0,0,0.2)';
+        for (let i = 0; i < 4; i++) {
+            const dx2 = (i - 1.5) * 15 * scale;
+            ctx.fillRect(cx + dx2 - 2*scale, cy + 25*scale, 4*scale, 15*scale);
+        }
+
+        ctx.shadowBlur = 0;
+        ctx.restore();
+
+        for (const pr of b.projectiles) {
+            if (!pr.ray) continue;
+            const px = pr.x - camx;
+            const py = pr.y - camy;
+            ctx.save();
+            ctx.shadowColor = '#fff';
+            ctx.shadowBlur = 30;
+            ctx.fillStyle = '#fff';
+            ctx.beginPath();
+            ctx.arc(px, py, pr.r, 0, 7);
+            ctx.fill();
+            ctx.restore();
+        }
+
     } else {
         const op = b.baited ? 0.7 : 0.92;
         ctx.fillStyle = 'rgba(5,2,10,'+op+')';
@@ -362,15 +514,18 @@ function drawboss(camx, camy) {
         ctx.shadowBlur = 0;
     }
 
-    for (const pr of b.projectiles) {
-        const px = pr.x - camx;
-        const py = pr.y - camy;
-        ctx.fillStyle = pr.green ? '#0f0' : (pr.dark ? '#a0f' : pr.gx ? '#f80' : '#48f');
-        ctx.shadowColor = ctx.fillStyle;
-        ctx.shadowBlur = 12;
-        ctx.beginPath();
-        ctx.arc(px, py, pr.r, 0, 7);
-        ctx.fill();
-        ctx.shadowBlur = 0;
+    if (b.type !== 'vereus') {
+        for (const pr of b.projectiles) {
+            if (pr.ray) continue;
+            const px = pr.x - camx;
+            const py = pr.y - camy;
+            ctx.fillStyle = pr.green ? '#0f0' : (pr.dark ? '#a0f' : pr.gx ? '#f80' : '#48f');
+            ctx.shadowColor = ctx.fillStyle;
+            ctx.shadowBlur = 12;
+            ctx.beginPath();
+            ctx.arc(px, py, pr.r, 0, 7);
+            ctx.fill();
+            ctx.shadowBlur = 0;
+        }
     }
 }
