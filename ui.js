@@ -136,23 +136,42 @@ function openskineditor() {
     document.getElementById('skincolor').value = player.skin.color;
     document.getElementById('skinhood').value = player.skin.hood;
     document.getElementById('skinsize').value = player.skin.size;
+    document.getElementById('skinhead').value = player.skin.head || 'default';
+    document.getElementById('skinbody').value = player.skin.body || 'default';
+    document.getElementById('skinlegs').value = player.skin.legs || 'default';
+    document.getElementById('skincape').value = player.skin.cape || 'none';
+    document.getElementById('skinweapon').value = player.skin.weapon || 'none';
 }
 
 function saveskin() {
     player.skin.color = document.getElementById('skincolor').value;
     player.skin.hood = document.getElementById('skinhood').value;
     player.skin.size = parseFloat(document.getElementById('skinsize').value);
+    player.skin.head = document.getElementById('skinhead').value;
+    player.skin.body = document.getElementById('skinbody').value;
+    player.skin.legs = document.getElementById('skinlegs').value;
+    player.skin.cape = document.getElementById('skincape').value;
+    player.skin.weapon = document.getElementById('skinweapon').value;
     localStorage.setItem('playerskin', JSON.stringify(player.skin));
     document.getElementById('skineditor').classList.add('hidden');
 }
 
 function resetskin() {
-    player.skin = { color: '#d9d2b8', hood: '#100c16', size: 1 };
+    player.skin = { color: '#d9d2b8', hood: '#100c16', size: 1, head: 'default', body: 'default', legs: 'default', cape: 'none', weapon: 'none' };
     localStorage.setItem('playerskin', JSON.stringify(player.skin));
     document.getElementById('skincolor').value = '#d9d2b8';
     document.getElementById('skinhood').value = '#100c16';
     document.getElementById('skinsize').value = 1;
+    document.getElementById('skinhead').value = 'default';
+    document.getElementById('skinbody').value = 'default';
+    document.getElementById('skinlegs').value = 'default';
+    document.getElementById('skincape').value = 'none';
+    document.getElementById('skinweapon').value = 'none';
 }
+
+let edmode = 'move';
+let selectedobj = null;
+let scriptpanel = null;
 
 function openleveleditor() {
     const el = document.getElementById('leveleditor');
@@ -161,29 +180,50 @@ function openleveleditor() {
     const ctxed = canvas.getContext('2d');
     canvas.width = canvas.clientWidth;
     canvas.height = canvas.clientHeight;
-    let selected = null;
-    let objects = [];
+    let objects = window.leveleditor_objects || [];
     let dragobj = null;
+    let dragoffx = 0, dragoffy = 0;
+    let rotateangle = 0;
+
+    const modebtns = document.querySelectorAll('.edmodebtn');
+    modebtns.forEach(b => {
+        b.onclick = () => {
+            edmode = b.dataset.mode;
+            modebtns.forEach(x => x.style.background = '');
+            b.style.background = '#4a3f80';
+        };
+    });
+    document.querySelector('.edmodebtn[data-mode="move"]').style.background = '#4a3f80';
 
     function redraw() {
         ctxed.clearRect(0, 0, canvas.width, canvas.height);
         ctxed.fillStyle = '#0a0a12';
         ctxed.fillRect(0, 0, canvas.width, canvas.height);
         for (const obj of objects) {
+            ctxed.save();
+            ctxed.translate(obj.x + obj.w/2, obj.y + obj.h/2);
+            ctxed.rotate(obj.rotation || 0);
             ctxed.fillStyle = obj.color || '#888';
-            ctxed.fillRect(obj.x, obj.y, obj.w, obj.h);
+            ctxed.fillRect(-obj.w/2, -obj.h/2, obj.w, obj.h);
             if (obj.label) {
                 ctxed.fillStyle = '#fff';
                 ctxed.font = '12px sans-serif';
-                ctxed.fillText(obj.label, obj.x, obj.y - 4);
+                ctxed.textAlign = 'center';
+                ctxed.fillText(obj.label, 0, -obj.h/2 - 4);
             }
+            if (selectedobj === obj) {
+                ctxed.strokeStyle = '#4af';
+                ctxed.lineWidth = 2;
+                ctxed.strokeRect(-obj.w/2 - 4, -obj.h/2 - 4, obj.w + 8, obj.h + 8);
+            }
+            ctxed.restore();
         }
     }
 
     document.querySelectorAll('[data-add]').forEach(btn => {
         btn.onclick = () => {
             const type = btn.dataset.add;
-            const newobj = { x: 100, y: 100, w: 40, h: 40, type, color: '#6a4' };
+            const newobj = { x: 100, y: 100, w: 40, h: 40, type, color: '#6a4', rotation: 0, label: type };
             if (type === 'platform') { newobj.w = 80; newobj.h = 20; newobj.color = '#556'; }
             else if (type === 'spike') { newobj.w = 20; newobj.h = 20; newobj.color = '#c33'; }
             else if (type === 'saw') { newobj.w = 30; newobj.h = 30; newobj.color = '#aaa'; }
@@ -192,6 +232,7 @@ function openleveleditor() {
             else if (type === 'mover') { newobj.w = 60; newobj.h = 16; newobj.color = '#6a5a8a'; }
             else if (type === 'boss') { newobj.w = 80; newobj.h = 80; newobj.color = '#822'; }
             objects.push(newobj);
+            window.leveleditor_objects = objects;
             redraw();
         };
     });
@@ -200,45 +241,125 @@ function openleveleditor() {
         const rect = canvas.getBoundingClientRect();
         const mx = e.clientX - rect.left;
         const my = e.clientY - rect.top;
+        selectedobj = null;
         for (let i = objects.length - 1; i >= 0; i--) {
             const obj = objects[i];
-            if (mx > obj.x && mx < obj.x + obj.w && my > obj.y && my < obj.y + obj.h) {
+            const cx = obj.x + obj.w/2;
+            const cy = obj.y + obj.h/2;
+            const dx = mx - cx;
+            const dy = my - cy;
+            const rot = obj.rotation || 0;
+            const cos = Math.cos(-rot);
+            const sin = Math.sin(-rot);
+            const lx = dx * cos - dy * sin;
+            const ly = dx * sin + dy * cos;
+            if (Math.abs(lx) < obj.w/2 && Math.abs(ly) < obj.h/2) {
+                selectedobj = obj;
                 dragobj = obj;
+                dragoffx = mx - obj.x;
+                dragoffy = my - obj.y;
                 break;
             }
         }
+        if (edmode === 'rotate' && selectedobj) {
+            rotateangle = selectedobj.rotation || 0;
+        }
+        redraw();
     });
+
     canvas.addEventListener('mousemove', e => {
         if (!dragobj) return;
         const rect = canvas.getBoundingClientRect();
-        dragobj.x = e.clientX - rect.left - dragobj.w/2;
-        dragobj.y = e.clientY - rect.top - dragobj.h/2;
+        const mx = e.clientX - rect.left;
+        const my = e.clientY - rect.top;
+        if (edmode === 'move') {
+            dragobj.x = mx - dragoffx;
+            dragobj.y = my - dragoffy;
+        } else if (edmode === 'rotate') {
+            const cx = dragobj.x + dragobj.w/2;
+            const cy = dragobj.y + dragobj.h/2;
+            const ang = Math.atan2(my - cy, mx - cx);
+            dragobj.rotation = ang;
+        }
         redraw();
     });
-    canvas.addEventListener('mouseup', () => { dragobj = null; });
+
+    canvas.addEventListener('mouseup', () => {
+        dragobj = null;
+        redraw();
+    });
+
     canvas.addEventListener('touchstart', e => {
         const touch = e.touches[0];
         const rect = canvas.getBoundingClientRect();
         const mx = touch.clientX - rect.left;
         const my = touch.clientY - rect.top;
+        selectedobj = null;
         for (let i = objects.length - 1; i >= 0; i--) {
             const obj = objects[i];
-            if (mx > obj.x && mx < obj.x + obj.w && my > obj.y && my < obj.y + obj.h) {
+            const cx = obj.x + obj.w/2;
+            const cy = obj.y + obj.h/2;
+            const dx = mx - cx;
+            const dy = my - cy;
+            const rot = obj.rotation || 0;
+            const cos = Math.cos(-rot);
+            const sin = Math.sin(-rot);
+            const lx = dx * cos - dy * sin;
+            const ly = dx * sin + dy * cos;
+            if (Math.abs(lx) < obj.w/2 && Math.abs(ly) < obj.h/2) {
+                selectedobj = obj;
                 dragobj = obj;
+                dragoffx = mx - obj.x;
+                dragoffy = my - obj.y;
                 break;
             }
         }
+        redraw();
     });
+
     canvas.addEventListener('touchmove', e => {
         e.preventDefault();
         if (!dragobj) return;
         const touch = e.touches[0];
         const rect = canvas.getBoundingClientRect();
-        dragobj.x = touch.clientX - rect.left - dragobj.w/2;
-        dragobj.y = touch.clientY - rect.top - dragobj.h/2;
+        const mx = touch.clientX - rect.left;
+        const my = touch.clientY - rect.top;
+        if (edmode === 'move') {
+            dragobj.x = mx - dragoffx;
+            dragobj.y = my - dragoffy;
+        } else if (edmode === 'rotate') {
+            const cx = dragobj.x + dragobj.w/2;
+            const cy = dragobj.y + dragobj.h/2;
+            const ang = Math.atan2(my - cy, mx - cx);
+            dragobj.rotation = ang;
+        }
         redraw();
     });
-    canvas.addEventListener('touchend', () => { dragobj = null; });
+
+    canvas.addEventListener('touchend', () => { dragobj = null; redraw(); });
+
+    if (!scriptpanel) {
+        scriptpanel = document.createElement('div');
+        scriptpanel.id = 'scriptpanel';
+        scriptpanel.style.cssText = 'position:absolute;bottom:10px;right:10px;background:#1a1a1a;border:1px solid #444;padding:10px;border-radius:6px;color:#ccc;font-size:12px;max-width:300px;';
+        scriptpanel.innerHTML = `
+            <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+                <span>script</span>
+                <button id="scriptclose" style="background:none;border:none;color:#888;cursor:pointer;">✕</button>
+            </div>
+            <textarea id="scriptarea" style="width:100%;height:60px;background:#0a0a0a;color:#ccc;border:1px solid #333;border-radius:4px;padding:4px;font-size:11px;resize:vertical;">// onupdate\n// this.x += 1;</textarea>
+            <button id="scriptapply" style="background:#2a4a6a;border:1px solid #4a8aba;color:#fff;padding:2px 8px;border-radius:4px;cursor:pointer;margin-top:4px;">apply</button>
+        `;
+        document.getElementById('leveleditor').appendChild(scriptpanel);
+        document.getElementById('scriptclose').onclick = () => scriptpanel.style.display = 'none';
+        document.getElementById('scriptapply').onclick = () => {
+            const code = document.getElementById('scriptarea').value;
+            if (selectedobj) {
+                selectedobj.script = code;
+                alert('script applied to selected object');
+            }
+        };
+    }
 
     window.leveleditor_objects = objects;
     redraw();
